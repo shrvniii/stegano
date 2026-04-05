@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Encode{% endblock %}
+{% block meta_desc %}Encode a secret message into a 3D model file using LSB vertex color steganography and AES-256 encryption.{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div class="section__label">Steganography Encoder</div>
+    <h1 class="page-header__title" id="encode-heading">Hide a Secret Message</h1>
+    <p class="page-header__subtitle">
+      Your message is encoded invisibly into vertex color bits of a 3D model.
+    </p>
+  </div>
+
+  <!-- Alert box (hidden initially) -->
+  <div id="alert-box" class="alert alert-error hidden" role="alert" aria-live="polite"></div>
+
+  <div class="encode-layout">
+
+    <!-- ════════════════ LEFT COLUMN ════════════════ -->
+    <div class="encode-left">
+
+      <!-- Section A: Message Input -->
+      <div class="card" id="section-message">
+        <div class="card__title">Section A — Secret Message</div>
+        <div class="form-group">
+          <label for="message">Your Secret Message</label>
+          <textarea
+            id="message"
+            name="message"
+            class="input"
+            placeholder="Type the message you want to hide inside the 3D model…"
+            rows="6"
+            aria-describedby="msg-stats"
+          ></textarea>
+          <div class="live-stats" id="msg-stats" aria-live="polite">
+            <span id="char-count">0 characters</span>
+            <span style="opacity:0.4;">·</span>
+            <span id="bits-needed">0 bits needed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B: Password & Encryption -->
+      <div class="card" id="section-password">
+        <div class="card__title">Section B — Encryption Key</div>
+
+        <div class="form-group">
+          <label for="password">Encryption Key / Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="input"
+            placeholder="Enter a strong password…"
+            autocomplete="new-password"
+            aria-describedby="strength-label"
+          />
+          <div class="strength-bar-wrap" aria-hidden="true">
+            <div class="strength-bar" id="strength-bar"></div>
+          </div>
+          <div class="strength-label" id="strength-label" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="toggle-row" for="aes-toggle" id="aes-toggle-label">
+            <input type="checkbox" id="aes-toggle" name="aes" />
+            <span class="toggle-switch" aria-hidden="true"></span>
+            <span class="toggle-label">
+              <strong>Enable AES-256 Encryption</strong> before hiding
+            </span>
+          </label>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem; padding-left:3.5rem;">
+            Encrypts the message before embedding — even if discovered, it can't be read without the key.
+          </p>
+        </div>
+
+        <!-- Decoy message (shown only when AES is ON) -->
+        <div class="decoy-field" id="decoy-field" role="region" aria-live="polite">
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="decoy-message">
+              🎭 Decoy Message
+              <span style="font-weight:400; color:var(--text-muted);">(shown with wrong password)</span>
+            </label>
+            <input
+              type="text"
+              id="decoy-message"
+              name="decoy"
+              class="input"
+              placeholder="Optional: a plausible fake message…"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Section D: Custom OBJ Upload -->
+      <div class="card" id="section-upload">
+        <div class="card__title">Section D — Upload Custom Model</div>
+        <div
+          class="dropzone"
+          id="dropzone"
+          role="button"
+          tabindex="0"
+          aria-label="Drop or browse .OBJ file"
+          onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('obj-upload').click()"
+        >
+          <input
+            type="file"
+            id="obj-upload"
+            name="obj_file"
+            accept=".obj"
+            aria-label="Upload OBJ model file"
+          />
+          <span class="dropzone__icon" aria-hidden="true">📦</span>
+          <div class="dropzone__label">
+            <strong>Drag &amp; drop</strong> your <code>.OBJ</code> file here
+          </div>
+          <div class="dropzone__hint">or click to browse — .OBJ files only</div>
+          <div class="dropzone__filename" id="drop-filename" aria-live="polite"></div>
+        </div>
+      </div>
+
+    </div><!-- /encode-left -->
+
+    <!-- ════════════════ RIGHT COLUMN ════════════════ -->
+    <div class="encode-right">
+
+      <!-- Section C: Model Selector -->
+      <div class="card" id="section-models">
+        <div class="card__title">Section C — Choose a 3D Model</div>
+
+        <div class="model-grid" id="model-grid" role="listbox" aria-label="Select a 3D model">
+
+          {% if models %}
+            {% for model in models %}
+            <div
+              class="model-card"
+              role="option"
+              tabindex="0"
+              data-name="{{ model.name }}"
+              data-capacity-bits="{{ model.capacity_bits }}"
+              id="model-card-{{ model.name }}"
+              aria-selected="false"
+              onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"
+              title="{{ model.name }} — {{ model.vertex_count }} vertices, capacity {{ (model.capacity_bits // 8) }} chars"
+            >
+              <img
+                src="{{ url_for('static', filename='models/thumbnails/' ~ model.name ~ '.png') }}"
+                alt="{{ model.name }} 3D model"
+                class="model-card__thumb"
+                loading="lazy"
+              />
+              <div class="model-card__body">
+                <div class="model-card__name">{{ model.name | capitalize }}</div>
+                <div class="model-card__meta">{{ model.vertex_count }} vertices</div>
+                <div class="model-card__meta">Max {{ (model.capacity_bits // 8) }} chars</div>
+                <div class="cap-bar-wrap" aria-hidden="true">
+                  <div class="cap-bar" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+
+          {% else %}
+            <!-- Fallback: hardcoded defaults if Flask doesn't pass models -->
+            {% for item in [
+              ('teapot',       222,  533),
+              ('cube',           8,   19),
+              ('icosahedron',   12,   28)
+            ] %}
+            <div
+              class="model-card"
+              role="option"
+              tabindex="0"
+              data-name="{{ item[0] }}"
+              data-capacity-bits="{{ item[2] * 8 }}"
+              id="model-card-{{ item[0] }}"
+              aria-selected="false"
+              onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"
+            >
+              <img
+                src="{{ url_for('static', filename='models/thumbnails/' ~ item[0] ~ '.png') }}"
+                alt="{{ item[0] | capitalize }} 3D model"
+                class="model-card__thumb"
+                loading="lazy"
+              />
+              <div class="model-card__body">
+                <div class="model-card__name">{{ item[0] | capitalize }}</div>
+                <div class="model-card__meta">{{ item[1] }} vertices</div>
+                <div class="model-card__meta">Max {{ item[2] }} chars</div>
+                <div class="cap-bar-wrap" aria-hidden="true">
+                  <div class="cap-bar" style="width:0%"></div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          {% endif %}
+
+        </div><!-- /model-grid -->
+
+        <a href="/models" class="browse-link" id="browse-models-link">Browse All Models →</a>
+      </div>
+
+      <!-- Section E: 3D Viewer -->
+      <div class="card" style="padding:0;" id="section-viewer">
+        <div class="viewer-toolbar">
+          <span class="viewer-toolbar__label">Render Mode</span>
+          <button class="btn-mode active" data-mode="solid"     id="mode-solid"     aria-pressed="true">Solid</button>
+          <button class="btn-mode"        data-mode="wireframe" id="mode-wireframe"  aria-pressed="false">Wireframe</button>
+          <button class="btn-mode"        data-mode="vertex"    id="mode-vertex"     aria-pressed="false">Vertex</button>
+        </div>
+        <div id="viewer-container" style="height:380px;" role="img" aria-label="3D model preview">
+          <div class="viewer-empty">
+            <span class="viewer-empty__icon" aria-hidden="true">🧊</span>
+            Select a model or upload an OBJ file to preview it here
+          </div>
+        </div>
+      </div>
+
+      <!-- Section F: Encode Button -->
+      <div class="card" id="section-encode-btn" style="text-align:center;">
+        <div class="card__title">Section F — Encode &amp; Download</div>
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem;">
+          Hides your message inside the selected 3D model. The encoded file will be ready to download.
+        </p>
+        <button
+          class="btn btn-primary btn-lg pulse"
+          id="encode-btn"
+          aria-describedby="encode-hint"
+          style="width:100%; justify-content:center;"
+        >
+          <span class="btn-text">🔐 Encode &amp; Download</span>
+          <span class="spinner hidden" id="encode-spinner" aria-hidden="true"></span>
+        </button>
+        <p id="encode-hint" style="font-size:0.78rem; color:var(--text-muted); margin-top:0.75rem;">
+          Processing happens on the server. Your message never leaves the form until you click encode.
+        </p>
+      </div>
+
+    </div><!-- /encode-right -->
+  </div><!-- /encode-layout -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/encode.js') }}"></script>
+{% endblock %}

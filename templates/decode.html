@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Decode{% endblock %}
+{% block meta_desc %}Decode a hidden message from an encoded 3D OBJ model file. Upload the file and enter the password key.{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div class="section__label">Steganography Decoder</div>
+    <h1 class="page-header__title" id="decode-heading">Decode Hidden Message</h1>
+    <p class="page-header__subtitle">
+      Upload an encoded <code>.OBJ</code> file and enter the password key to reveal the hidden message.
+    </p>
+  </div>
+
+  <div style="max-width:640px;">
+
+    <!-- ── File Upload ───────────────────────────────────────────── -->
+    <div class="card" id="decode-upload-section">
+      <div class="card__title">Upload Encoded Model</div>
+      <div
+        class="dropzone"
+        id="decode-dropzone"
+        role="button"
+        tabindex="0"
+        aria-label="Drop or browse encoded OBJ file"
+        onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('decode-file-input').click()"
+      >
+        <input type="file" id="decode-file-input" accept=".obj" aria-label="Upload encoded OBJ file" />
+        <span class="dropzone__icon" aria-hidden="true">📂</span>
+        <div class="dropzone__label">
+          <strong>Drop encoded OBJ file here</strong> or click to browse
+        </div>
+        <div class="dropzone__hint">.OBJ files only</div>
+        <div class="dropzone__filename" id="decode-filename" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <!-- ── Password Key ──────────────────────────────────────────── -->
+    <div class="card" id="decode-key-section">
+      <div class="card__title">Password Key</div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label for="decode-password">Enter Password Key</label>
+        <input
+          type="password"
+          id="decode-password"
+          name="key"
+          class="input"
+          placeholder="Enter the password used during encoding…"
+          autocomplete="off"
+          aria-describedby="decode-hint"
+        />
+        <p id="decode-hint" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">
+          💡 Scan QR2 to auto-fill this field
+        </p>
+      </div>
+    </div>
+
+    <!-- ── Decode Button ─────────────────────────────────────────── -->
+    <div class="card" style="text-align:center;" id="decode-action-section">
+      <button
+        class="btn btn-primary btn-lg"
+        id="decode-btn"
+        style="width:100%; justify-content:center;"
+      >
+        <span class="btn-text">🔓 Decode Message</span>
+        <span class="spinner hidden" id="decode-spinner" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <!-- ── Alert ─────────────────────────────────────────────────── -->
+    <div id="decode-alert" class="alert alert-error hidden" role="alert" aria-live="polite"></div>
+
+    <!-- ── Result (hidden until decode completes) ────────────────── -->
+    <div class="message-reveal" id="decode-result" role="region" aria-label="Decoded message">
+      <div class="card">
+        <div class="card__title">Hidden Message Revealed</div>
+
+        <div class="message-box">
+          <div class="message-box__label">Decoded Message</div>
+          <div id="decoded-text"></div>
+        </div>
+
+        <div style="margin-top:1.25rem;">
+          <div id="integrity-badge" class="integrity-badge"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /max-width -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const dropzone    = document.getElementById('decode-dropzone');
+  const fileInput   = document.getElementById('decode-file-input');
+  const filename    = document.getElementById('decode-filename');
+  const passInput   = document.getElementById('decode-password');
+  const decodeBtn   = document.getElementById('decode-btn');
+  const spinner     = document.getElementById('decode-spinner');
+  const alertBox    = document.getElementById('decode-alert');
+  const resultBox   = document.getElementById('decode-result');
+  const decodedText = document.getElementById('decoded-text');
+  const intBadge    = document.getElementById('integrity-badge');
+
+  let selectedFile = null;
+  let isDecoding   = false;
+
+  // ── Drag & Drop ──────────────────────────────────────────────
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file.name.toLowerCase().endsWith('.obj')) {
+      showAlert('Only .OBJ files are supported.', 'error');
+      return;
+    }
+    selectedFile = file;
+    filename.textContent = file.name;
+    hideAlert();
+  }
+
+  // ── Decode Submit ────────────────────────────────────────────
+  decodeBtn.addEventListener('click', async () => {
+    if (isDecoding) return;
+
+    if (!selectedFile) { showAlert('Please upload an encoded .OBJ file.', 'error'); return; }
+    if (!passInput.value.trim()) { showAlert('Please enter the password key.', 'error'); return; }
+
+    isDecoding = true;
+    setLoading(true);
+    hideAlert();
+    resultBox.classList.remove('visible');
+
+    const formData = new FormData();
+    formData.append('obj_file', selectedFile);
+    formData.append('key', passInput.value.trim());
+
+    try {
+      const res  = await fetch('/decode', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Decoding failed: ' + res.status);
+      }
+
+      // Show result
+      decodedText.textContent = data.message || '(empty message)';
+
+      if (data.integrity_ok) {
+        intBadge.className = 'integrity-badge ok';
+        intBadge.textContent = '✅ Integrity Check Passed — File has not been tampered with';
+      } else {
+        intBadge.className = 'integrity-badge fail';
+        intBadge.textContent = '❌ Integrity Check Failed — File may have been modified';
+      }
+
+      resultBox.classList.add('visible');
+      resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (err) {
+      showAlert(err.message || 'Decoding failed. Please check your file and password.', 'error');
+    } finally {
+      isDecoding = false;
+      setLoading(false);
+    }
+  });
+
+  // ── Helpers ──────────────────────────────────────────────────
+  function setLoading(loading) {
+    decodeBtn.disabled = loading;
+    spinner.classList.toggle('hidden', !loading);
+    decodeBtn.querySelector('.btn-text').textContent = loading ? 'Decoding…' : '🔓 Decode Message';
+  }
+
+  function showAlert(msg, type) {
+    alertBox.className = 'alert alert-' + type;
+    alertBox.textContent = msg;
+    alertBox.classList.remove('hidden');
+    alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideAlert() {
+    alertBox.classList.add('hidden');
+  }
+})();
+</script>
+{% endblock %}
