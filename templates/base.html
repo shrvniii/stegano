@@ -6,9 +6,10 @@
   <meta name="description" content="{% block meta_desc %}3D Steganography & Encryption Vault — Hide secret messages invisibly inside 3D model files using LSB vertex color encoding.{% endblock %}" />
   <title>{% block title %}3D Steg Vault{% endblock %} | 3D Steganography & Encryption Vault</title>
 
-  <!-- Fonts -->
+  <!-- Fonts: DM Serif Display (headings) + DM Sans (body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 
   <!-- Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
@@ -53,14 +54,7 @@
   </main>
 
   <!-- ── Footer ─────────────────────────────────────────────────── -->
-  <footer class="footer" role="contentinfo">
-    <div class="footer__name">3D Steganography &amp; Encryption Vault</div>
-    <p class="footer__credits">
-      Frontend by <strong>Shravani</strong> &nbsp;·&nbsp;
-      Team Project &nbsp;·&nbsp;
-      Powered by Three.js &amp; Flask
-    </p>
-  </footer>
+  <footer class="footer" role="contentinfo"></footer>
 
   <!-- Theme script (non-module, runs immediately) -->
   <script src="{{ url_for('static', filename='js/theme.js') }}"></script>

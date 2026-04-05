@@ -183,11 +183,24 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="module">
+  // Render warm Three.js thumbnails on home page model cards
+  import { renderThumbnail } from '/static/js/viewer.js';
+
+  document.querySelectorAll('[id^="home-model-"]').forEach(card => {
+    const name = card.id.replace('home-model-', '');
+    const img  = card.querySelector('.model-card__thumb');
+    if (name && img) {
+      renderThumbnail(img, '/static/models/' + name + '.obj');
+    }
+  });
+</script>
+
 <script>
-  // Animated binary bits in hero background
+  // Animated binary bits in hero background — warm rust tone
   (function() {
     const canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0.06;z-index:0;';
+    canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0.05;z-index:0;';
     const hero = document.querySelector('.hero');
     if (!hero) return;
     hero.style.position = 'relative';
@@ -204,10 +217,10 @@
     }
 
     function draw() {
-      ctx.fillStyle = 'rgba(15,15,20,0.05)';
+      ctx.fillStyle = 'rgba(245,240,232,0.08)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#7c3aed';
-      ctx.font = fontSize + 'px JetBrains Mono, monospace';
+      ctx.fillStyle = '#B5451B';  /* rust -- matches --accent */
+      ctx.font = fontSize + 'px monospace';
       drops.forEach((y, i) => {
         const bit = Math.random() > 0.5 ? '1' : '0';
         ctx.fillText(bit, i * fontSize, y * fontSize);
@@ -222,3 +235,4 @@
   })();
 </script>
 {% endblock %}
+

@@ -245,4 +245,15 @@
 
 {% block scripts %}
 <script type="module" src="{{ url_for('static', filename='js/encode.js') }}"></script>
+<script type="module">
+  // Fix 1: Replace static thumbnails with real Three.js renders
+  import { renderThumbnail } from '/static/js/viewer.js';
+  document.querySelectorAll('.model-card').forEach(card => {
+    const name = card.dataset.name;
+    const img  = card.querySelector('.model-card__thumb');
+    if (name && img) {
+      renderThumbnail(img, '/static/models/' + name + '.obj');
+    }
+  });
+</script>
 {% endblock %}

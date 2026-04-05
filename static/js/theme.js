@@ -1,28 +1,30 @@
 /**
  * theme.js — Dark / Light mode toggle
+ * Default: Light (warm cream). Toggle adds dark-mode class.
  * Reads preference from localStorage and applies on load.
  */
 (function () {
   const STORAGE_KEY = 'steg-theme';
-  const LIGHT_CLASS = 'light-mode';
+  const DARK_CLASS  = 'dark-mode';
 
-  function applyTheme(isLight) {
-    document.body.classList.toggle(LIGHT_CLASS, isLight);
+  function applyTheme(isDark) {
+    document.body.classList.toggle(DARK_CLASS, isDark);
     const btn = document.getElementById('theme-toggle');
-    if (btn) btn.textContent = isLight ? '🌙' : '☀️';
+    if (btn) btn.textContent = isDark ? 'Light' : 'Dark';
   }
 
   function init() {
     const saved = localStorage.getItem(STORAGE_KEY);
-    const preferLight = saved ? saved === 'light' : false; // Dark mode is default
-    applyTheme(preferLight);
+    // Default to light mode (warm cream); user can toggle to dark
+    const isDark = saved ? saved === 'dark' : false;
+    applyTheme(isDark);
 
     const btn = document.getElementById('theme-toggle');
     if (btn) {
       btn.addEventListener('click', () => {
-        const isLight = !document.body.classList.contains(LIGHT_CLASS);
-        applyTheme(isLight);
-        localStorage.setItem(STORAGE_KEY, isLight ? 'light' : 'dark');
+        const isDark = !document.body.classList.contains(DARK_CLASS);
+        applyTheme(isDark);
+        localStorage.setItem(STORAGE_KEY, isDark ? 'dark' : 'light');
       });
     }
   }

@@ -148,7 +148,17 @@
 
 {% block scripts %}
 <script type="module">
-  import { initViewer, setRenderMode, syncBackground } from '/static/js/viewer.js';
+  import { initViewer, setRenderMode, syncBackground, renderThumbnail } from '/static/js/viewer.js';
+
+  // Fix 1: Dynamically render model thumbnails from actual geometry
+  document.querySelectorAll('.model-card').forEach(card => {
+    const id   = card.id; // e.g. "lib-model-teapot"
+    const name = id.replace('lib-model-', '');
+    const img  = card.querySelector('.model-card__thumb');
+    if (name && img) {
+      renderThumbnail(img, '/static/models/' + name + '.obj');
+    }
+  });
 
   let activeViewer = null;
 
