@@ -13,7 +13,7 @@ const dropzone       = document.getElementById("dropzone-decode");
 const dropInner      = document.getElementById("drop-inner-decode");
 const dropReady      = document.getElementById("drop-ready-decode");
 const dropFilename   = document.getElementById("drop-filename-decode");
-const fileInput      = document.getElementById("obj-file-input");
+const fileInput      = document.getElementById("decode-file-input");
 const clearBtn       = document.getElementById("clear-decode-file");
 
 const passwordInput  = document.getElementById("decode-password");

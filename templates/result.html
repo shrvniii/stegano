@@ -16,14 +16,14 @@
     <div class="qr-card qr1">
       <div class="qr-label-top">PUBLIC</div>
       <div class="qr-img-wrap">
-        <img src="{{ qr1_url }}" alt="QR1 – Encoded File" id="qr1-img">
+        <img src="{{ result.qr_file }}" alt="QR1 – Encoded File" id="qr1-img">
       </div>
       <div class="qr-info">
         <span class="qr-num">QR 1</span>
         <span class="qr-desc">Encoded OBJ File Link</span>
       </div>
       <p class="qr-hint">Share freely — anyone can view the model, no one can read the message without QR2.</p>
-      <a class="btn-download" href="{{ qr1_url }}" download="QR1_file.png">⬇ Download QR1</a>
+      <a class="btn-download" href="{{ result.qr_file }}" download="QR1_file.png">⬇ Download QR1</a>
     </div>
 
     <div class="qr-divider">
@@ -35,14 +35,14 @@
     <div class="qr-card qr2">
       <div class="qr-label-top">PRIVATE</div>
       <div class="qr-img-wrap">
-        <img src="{{ qr2_url }}" alt="QR2 – Password Key" id="qr2-img">
+        <img src="{{ result.qr_key }}" alt="QR2 – Password Key" id="qr2-img">
       </div>
       <div class="qr-info">
         <span class="qr-num">QR 2</span>
         <span class="qr-desc">Secret Password Key</span>
       </div>
       <p class="qr-hint">Share <em>only</em> with your intended receiver — via Signal, in person, or any private channel.</p>
-      <a class="btn-download" href="{{ qr2_url }}" download="QR2_key.png">⬇ Download QR2</a>
+      <a class="btn-download" href="{{ result.qr_key }}" download="QR2_key.png">⬇ Download QR2</a>
     </div>
   </section>
 
@@ -52,25 +52,25 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">📦</div>
-        <div class="stat-value">{{ stats.bits_used | default('—') }}</div>
+        <div class="stat-value">{{ result.stats.bits_used | default('—') }}</div>
         <div class="stat-label">Bits Used</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">🔵</div>
-        <div class="stat-value">{{ stats.vertices_modified | default('—') }}</div>
+        <div class="stat-value">{{ result.stats.vertices_modified | default('—') }}</div>
         <div class="stat-label">Vertices Modified</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">📊</div>
-        <div class="stat-value">{{ stats.capacity_percent | default('—') }}%</div>
+        <div class="stat-value">{{ result.stats.capacity_percent | default('—') }}%</div>
         <div class="stat-label">Capacity Used</div>
         <div class="stat-bar-wrap">
-          <div class="stat-bar" style="width: {{ stats.capacity_percent | default(0) }}%"></div>
+          <div class="stat-bar" style="width: {{ result.stats.capacity_percent | default(0) }}%"></div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">🔒</div>
-        <div class="stat-value">{{ 'AES-256' if stats.encrypted else 'None' }}</div>
+        <div class="stat-value">{{ 'AES-256' if result.stats.encrypted else 'None' }}</div>
         <div class="stat-label">Encryption</div>
       </div>
     </div>
@@ -105,7 +105,7 @@
 <script>
   // ── Pass model URLs from Flask ───────────────────────────────
   const ORIGINAL_OBJ = "{{ original_obj_url | default('') }}";
-  const ENCODED_OBJ  = "{{ encoded_obj_url  | default('') }}";
+  const ENCODED_OBJ  = "{{ result.file_url | default('') }}";
 </script>
 <script src="/static/js/viewer.js"></script>
 <script>
