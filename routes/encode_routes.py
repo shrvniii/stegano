@@ -103,6 +103,11 @@ def encode():
     qr1_path, qr2_path = generate_qr_pair(file_url, password, unique_id)
 
     # --- 7. Save to session for the result page ---
+    total_bits = len(full_payload) * 8
+    total_vertices = len(vertices)
+    capacity_bits = total_vertices * 3
+    used_percentage = (total_bits / capacity_bits) * 100 if capacity_bits > 0 else 0
+
     session["result"] = {
         "output_file":    output_filename,
         "file_url":       file_url,
@@ -112,11 +117,10 @@ def encode():
         "original_obj_url": f"/static/models/{model_name}.obj" if not obj_file else f"/static/uploads/{os.path.basename(input_path)}",
         "encoded_obj_url":  f"/static/encoded_output/{output_filename}",
         "stats": {
-            "message_length":    len(message),
-            "vertices_modified": (len(full_payload) * 8 + 2) // 3,
-            "bits_used":         (len(full_payload) * 8),
-            "capacity_percent":   round(((len(full_payload) * 8) / (len(vertices) * 3)) * 100, 1) if len(vertices) > 0 else 0,
-            "encrypted":         use_encryption
+            "bits_used":  total_bits,
+            "capacity":    capacity_bits,
+            "percentage":  round(used_percentage, 1),
+            "encryption":  use_encryption
         }
     }
 

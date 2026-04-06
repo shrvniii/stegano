@@ -17,7 +17,7 @@ def decode_page():
 @decode_bp.route("/decode", methods=["POST"])
 def decode():
     # --- 1. Get inputs ---
-    password = request.form.get("password", "")
+    password = request.form.get("password") or request.form.get("key", "")
     obj_file = request.files.get("obj_file")
 
     if not password or not obj_file:
