@@ -53,11 +53,11 @@ def get_vertex_count(filepath):
 
 def get_capacity(filepath):
     """
-    Returns max characters that can be hidden in this OBJ file.
-    Formula: vertices × 3 color channels × 1 bit ÷ 8 bits per char
+    Returns max bits that can be hidden in this OBJ file.
+    Formula: vertices × 3 color channels (R,G,B) × 1 bit
     """
     vertex_count = get_vertex_count(filepath)
-    return (vertex_count * 3) // 8
+    return vertex_count * 3
 import os
 import urllib.parse
 
@@ -95,7 +95,7 @@ def get_models_list(folder):
             "slug":          slug,
             "name":          filename.replace(".obj", "").replace("_", " ").title(),
             "vertex_count":  vertex_count,
-            "capacity_bits": capacity * 8, 
+            "capacity_bits": capacity, 
             "capacity_chars": capacity,
             "description":    DESCRIPTIONS.get(filename, "A 3D mesh ready for secure data encoding."),
             "obj_url":       f"/static/models/{urllib.parse.quote(filename)}",
