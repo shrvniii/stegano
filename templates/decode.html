@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Decode{% endblock %}
+{% block meta_desc %}Decode a hidden message from an encoded 3D OBJ model file. Upload the file and enter the password key.{% endblock %}
+
+{% block head %}
+<!-- jsQR library for QR code scanning -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="text-align:center;">
+    <div class="section__label">Steganography Decoder</div>
+    <h1 class="page-header__title" id="decode-heading">Decode Hidden Message</h1>
+    <p class="page-header__subtitle" style="max-width:560px; margin-left:auto; margin-right:auto;">
+      Upload an encoded <code>.OBJ</code> file and enter the password key to reveal the hidden message.
+    </p>
+  </div>
+
+  <!-- Centre-aligned content column -->
+  <div class="decode-center-col">
+
+    <!-- ── QR1 Upload (auto-load OBJ from QR) ──────────────────── -->
+    <div class="card" id="decode-qr1-section">
+      <div class="card__title">Option A — Upload QR1 to Load Encoded OBJ</div>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem; text-align:center;">
+        Upload the public QR1 image to automatically fetch the encoded model file.
+      </p>
+      <div class="dropzone" id="qr1-dropzone" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('qr1-file-input').click()">
+        <input type="file" id="qr1-file-input" accept=".png,.jpg,.jpeg,.gif,.webp" aria-label="Upload QR1 image" />
+        <span class="dropzone__icon" aria-hidden="true">📷</span>
+        <div class="dropzone__label"><strong>Drop QR1 image here</strong> or click to browse</div>
+        <div class="dropzone__hint">.PNG / .JPG accepted</div>
+      </div>
+      <div id="qr1-status" class="qr-decode-status" aria-live="polite"></div>
+    </div>
+
+    <!-- ── File Upload ───────────────────────────────────────────── -->
+    <div class="card" id="decode-upload-section">
+      <div class="card__title">Option B — Upload Encoded OBJ Directly</div>
+      <div
+        class="dropzone"
+        id="decode-dropzone"
+        role="button"
+        tabindex="0"
+        aria-label="Drop or browse encoded OBJ file"
+        onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('decode-file-input').click()"
+      >
+        <input type="file" id="decode-file-input" accept=".obj" aria-label="Upload encoded OBJ file" />
+        <span class="dropzone__icon" aria-hidden="true">📂</span>
+        <div class="dropzone__label">
+          <strong>Drop encoded OBJ file here</strong> or click to browse
+        </div>
+        <div class="dropzone__hint">.OBJ files only</div>
+        <div class="dropzone__filename" id="decode-filename" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <!-- ── Password Key ──────────────────────────────────────────── -->
+    <div class="card" id="decode-key-section">
+      <div class="card__title">Password Key</div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label for="decode-password">Enter Password Key</label>
+        <input
+          type="password"
+          id="decode-password"
+          name="key"
+          class="input"
+          placeholder="Enter the password used during encoding…"
+          autocomplete="off"
+          aria-describedby="decode-hint"
+        />
+        <p id="decode-hint" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">
+          💡 Upload QR2 below to auto-fill this field
+        </p>
+      </div>
+
+      <!-- QR2 Upload for auto-fill password -->
+      <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border);">
+        <div style="font-size:0.82rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.75rem; text-align:center;">
+          Or upload QR2 to auto-fill password
+        </div>
+        <div class="dropzone" id="qr2-dropzone" role="button" tabindex="0" style="padding:1.25rem;"
+             onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('qr2-file-input').click()">
+          <input type="file" id="qr2-file-input" accept=".png,.jpg,.jpeg,.gif,.webp" aria-label="Upload QR2 image" />
+          <span class="dropzone__icon" aria-hidden="true" style="font-size:1.5rem;">🔑</span>
+          <div class="dropzone__label" style="font-size:0.85rem;"><strong>Drop QR2 image</strong> or click to browse</div>
+        </div>
+        <div id="qr2-status" class="qr-decode-status" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <!-- ── Decode Button ─────────────────────────────────────────── -->
+    <div class="card" id="decode-action-section">
+      <button
+        class="btn btn-primary btn-lg"
+        id="decode-btn"
+        style="width:100%; justify-content:center;"
+      >
+        <span class="btn-text">🔓 Decode Message</span>
+        <span class="spinner hidden" id="decode-spinner" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <!-- ── Alert ─────────────────────────────────────────────────── -->
+    <div id="decode-alert" class="alert alert-error hidden" role="alert" aria-live="polite"></div>
+
+    <!-- ── Result (hidden until decode completes) ────────────────── -->
+    <div class="message-reveal" id="decode-result" role="region" aria-label="Decoded message">
+      <div class="card">
+        <div class="card__title">Hidden Message Revealed</div>
+
+        <div class="message-box">
+          <div class="message-box__label">Decoded Message</div>
+          <div id="decoded-text"></div>
+        </div>
+
+        <div style="margin-top:1.25rem; text-align:center;">
+          <div id="integrity-badge" class="integrity-badge"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /decode-center-col -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const dropzone    = document.getElementById('decode-dropzone');
+  const fileInput   = document.getElementById('decode-file-input');
+  const filename    = document.getElementById('decode-filename');
+  const passInput   = document.getElementById('decode-password');
+  const decodeBtn   = document.getElementById('decode-btn');
+  const spinner     = document.getElementById('decode-spinner');
+  const alertBox    = document.getElementById('decode-alert');
+  const resultBox   = document.getElementById('decode-result');
+  const decodedText = document.getElementById('decoded-text');
+  const intBadge    = document.getElementById('integrity-badge');
+
+  let selectedFile = null;
+  let isDecoding   = false;
+
+  // ── OBJ Drag & Drop ──────────────────────────────────────────
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file.name.toLowerCase().endsWith('.obj')) {
+      showAlert('Only .OBJ files are supported.', 'error');
+      return;
+    }
+    selectedFile = file;
+    filename.textContent = file.name;
+    hideAlert();
+  }
+
+  // ── QR Code Decoder Helper ───────────────────────────────────
+  function decodeQRFromFile(file, callback) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      if (typeof jsQR !== 'undefined') {
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        callback(code ? code.data : null);
+      } else {
+        callback(null);
+      }
+    };
+    img.onerror = () => callback(null);
+    img.src = URL.createObjectURL(file);
+  }
+
+  // ── QR1 — Auto-load encoded OBJ from URL ─────────────────────
+  function setupQRZone(dropzoneId, inputId, statusId, onDecode) {
+    const dz = document.getElementById(dropzoneId);
+    const fi = document.getElementById(inputId);
+    const st = document.getElementById(statusId);
+    if (!dz || !fi) return;
+
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault();
+      dz.classList.remove('dragover');
+      const f = e.dataTransfer.files[0];
+      if (f) processQR(f);
+    });
+    fi.addEventListener('change', () => { if (fi.files[0]) processQR(fi.files[0]); });
+
+    function processQR(file) {
+      st.textContent = '⏳ Reading QR code…';
+      st.className = 'qr-decode-status';
+      decodeQRFromFile(file, (data) => {
+        if (data) {
+          st.textContent = '✅ QR code read successfully';
+          st.className = 'qr-decode-status qr-success';
+          onDecode(data);
+        } else {
+          st.textContent = '❌ Could not read QR code — please enter manually';
+          st.className = 'qr-decode-status qr-fail';
+        }
+      });
+    }
+  }
+
+  // QR1: extract file URL → auto-trigger OBJ loading
+  setupQRZone('qr1-dropzone', 'qr1-file-input', 'qr1-status', (url) => {
+    // Try to fetch the OBJ from the URL
+    filename.textContent = 'Loading from QR1: ' + url;
+    fetch(url)
+      .then(res => res.blob())
+      .then(blob => {
+        const f = new File([blob], 'encoded_from_qr.obj', { type: 'application/octet-stream' });
+        selectedFile = f;
+        filename.textContent = '✅ encoded_from_qr.obj (loaded via QR1)';
+      })
+      .catch(() => {
+        filename.textContent = 'QR1 URL: ' + url + ' (load manually if external)';
+      });
+  });
+
+  // QR2: extract password → auto-fill input
+  setupQRZone('qr2-dropzone', 'qr2-file-input', 'qr2-status', (password) => {
+    passInput.value = password;
+    passInput.type = 'text'; // Show the auto-filled value briefly
+    setTimeout(() => { passInput.type = 'password'; }, 2000);
+  });
+
+  // ── Decode Submit ────────────────────────────────────────────
+  decodeBtn.addEventListener('click', async () => {
+    if (isDecoding) return;
+
+    if (!selectedFile) { showAlert('Please upload an encoded .OBJ file.', 'error'); return; }
+    if (!passInput.value.trim()) { showAlert('Please enter the password key.', 'error'); return; }
+
+    isDecoding = true;
+    setLoading(true);
+    hideAlert();
+    resultBox.classList.remove('visible');
+
+    const formData = new FormData();
+    formData.append('obj_file', selectedFile);
+    formData.append('key', passInput.value.trim());
+
+    try {
+      const res  = await fetch('/decode', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Decoding failed: ' + res.status);
+      }
+
+      decodedText.textContent = data.message || '(empty message)';
+
+      if (data.integrity_ok) {
+        intBadge.className = 'integrity-badge ok';
+        intBadge.textContent = '✅ Integrity Check Passed — File has not been tampered with';
+      } else {
+        intBadge.className = 'integrity-badge fail';
+        intBadge.textContent = '❌ Integrity Check Failed — File may have been modified';
+      }
+
+      resultBox.classList.add('visible');
+      resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (err) {
+      showAlert(err.message || 'Decoding failed. Please check your file and password.', 'error');
+    } finally {
+      isDecoding = false;
+      setLoading(false);
+    }
+  });
+
+  // ── Helpers ──────────────────────────────────────────────────
+  function setLoading(loading) {
+    decodeBtn.disabled = loading;
+    spinner.classList.toggle('hidden', !loading);
+    decodeBtn.querySelector('.btn-text').textContent = loading ? 'Decoding…' : '🔓 Decode Message';
+  }
+
+  function showAlert(msg, type) {
+    alertBox.className = 'alert alert-' + type;
+    alertBox.textContent = msg;
+    alertBox.classList.remove('hidden');
+    alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideAlert() {
+    alertBox.classList.add('hidden');
+  }
+})();
+</script>
+{% endblock %}

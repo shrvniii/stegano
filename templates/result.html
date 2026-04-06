@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Encoding Complete{% endblock %}
+{% block meta_desc %}Your secret message has been encoded into the 3D model. Download your QR codes and encoded file.{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="text-align:center;">
+    <div class="section__label">Encoding Complete</div>
+    <h1 class="page-header__title" id="result-heading">Encoding Complete ✓</h1>
+    <p class="page-header__subtitle">
+      Your secret message has been hidden inside the 3D model. Share the QR codes to enable decoding.
+    </p>
+  </div>
+
+  <!-- ── Download Encoded File (prominent, near top) ─────────── -->
+  <section style="text-align:center; padding:1.5rem 0 2rem;" aria-label="Download encoded file">
+    <a
+      href="{{ download_url or '#' }}"
+      download
+      class="btn btn-primary btn-lg"
+      id="download-encoded"
+      style="font-size:1.1rem; padding:1rem 2.5rem;"
+    >
+      ⬇  Download Encoded OBJ File
+    </a>
+    {% if not download_url %}
+    <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.75rem;">
+      (Download available after encoding via the Encode page)
+    </p>
+    {% endif %}
+  </section>
+
+  <!-- ── QR Codes ──────────────────────────────────────────────── -->
+  <section aria-labelledby="qr-heading">
+    <div class="section__label">QR Codes</div>
+    <h2 id="qr-heading" style="margin-bottom:0.5rem;">Share securely</h2>
+    <p style="color:var(--text-secondary); margin-bottom:1rem;">
+      Share QR1 publicly. Only share QR2 with the intended receiver through a secure channel.
+    </p>
+
+    <div class="qr-grid">
+      <!-- QR1 — Public -->
+      <div class="qr-card" id="qr1-card">
+        <div class="qr-card__label">📂 Public: Share this freely</div>
+        <div class="qr-card__hint">Links to the encoded .OBJ file download</div>
+        {% if qr1_path %}
+          <img src="{{ qr1_path }}" alt="QR Code 1 — public file link" id="qr1-img" />
+        {% else %}
+          <div style="width:200px;height:200px;margin:0 auto 1rem;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.85rem;">
+            QR1 will appear here
+          </div>
+        {% endif %}
+        <a
+          href="{{ qr1_path or '#' }}"
+          download="steg_vault_qr1_public.png"
+          class="btn btn-outline"
+          style="font-size:0.85rem;"
+          id="download-qr1"
+        >
+          ⬇ Download QR1
+        </a>
+      </div>
+
+      <!-- QR2 — Private -->
+      <div class="qr-card" id="qr2-card">
+        <div class="qr-card__label">🔑 Private: Share only with receiver</div>
+        <div class="qr-card__hint">Encodes the password key</div>
+        {% if qr2_path %}
+          <img src="{{ qr2_path }}" alt="QR Code 2 — private key" id="qr2-img" />
+        {% else %}
+          <div style="width:200px;height:200px;margin:0 auto 1rem;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.85rem;">
+            QR2 will appear here
+          </div>
+        {% endif %}
+        <a
+          href="{{ qr2_path or '#' }}"
+          download="steg_vault_qr2_private.png"
+          class="btn btn-outline"
+          style="font-size:0.85rem;"
+          id="download-qr2"
+        >
+          ⬇ Download QR2
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Encoding Stats ─────────────────────────────────────────── -->
+  <section class="section" aria-labelledby="stats-heading">
+    <div class="section__label">Encoding Statistics</div>
+    <h2 id="stats-heading" style="margin-bottom:0.5rem;">Encoding Details</h2>
+
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-item">
+        <div class="stat-item__value">{{ stats.bits_used if stats else '—' }}</div>
+        <div class="stat-item__label">Bits Used</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-item__value">{{ stats.vertices_modified if stats else '—' }}</div>
+        <div class="stat-item__label">Vertices Modified</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-item__value">{{ stats.capacity_percent if stats else '—' }}%</div>
+        <div class="stat-item__label">Capacity Used</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-item__value" style="font-size:1rem;">
+          {% if stats and stats.encrypted %}
+            🔒 AES-256
+          {% else %}
+            🔓 None
+          {% endif %}
+        </div>
+        <div class="stat-item__label">Encryption</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Before / After 3D Comparison ────────────────────────────── -->
+  <section class="section" aria-labelledby="compare-heading">
+    <div class="section__label">Visual Comparison</div>
+    <h2 id="compare-heading" style="margin-bottom:0.5rem;">Before vs After</h2>
+
+    <!-- Explanatory note -->
+    <div class="compare-explainer" style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom:1.5rem; font-size:0.9rem; line-height:1.7; color: var(--text-secondary);">
+      <strong style="color:var(--accent-cyan);">How to read this comparison:</strong>
+      The left viewer shows the model with standard lighting (how everyone sees it).
+      The right viewer shows the <em>raw vertex RGB colours</em> where your message bits are actually stored.
+      To the naked eye they look identical — <strong>that's steganography</strong>.
+    </div>
+
+    <div class="dual-viewer" id="dual-viewer-wrap">
+      <div>
+        <div class="viewer-panel">
+          <div class="viewer-toolbar" style="border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
+            <span class="viewer-toolbar__label">Standard Lighting</span>
+          </div>
+          <div id="viewer-original" class="viewer-container" style="height:360px;">
+            <div class="viewer-empty"><span class="viewer-empty__icon">🧊</span>Original model</div>
+          </div>
+        </div>
+        <div class="dual-viewer__label">Original (no hidden data)</div>
+      </div>
+      <div>
+        <div class="viewer-panel">
+          <div class="viewer-toolbar" style="border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
+            <span class="viewer-toolbar__label" style="color:var(--accent-cyan);">Vertex Color Visualizer</span>
+          </div>
+          <div id="viewer-encoded" class="viewer-container" style="height:360px;">
+            <div class="viewer-empty"><span class="viewer-empty__icon">🔐</span>Encoded model</div>
+          </div>
+        </div>
+        <div class="dual-viewer__label">Encoded — Vertex colours showing hidden bits</div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { initDualViewer, setRenderMode, setVertexColorMode, syncBackground } from '/static/js/viewer.js';
+
+  let dualViewer = null;
+
+  const originalUrl = '{{ original_obj_url | default("/static/models/teapot.obj", true) }}';
+  const encodedUrl  = '{{ encoded_obj_url  | default("/static/models/teapot.obj", true) }}';
+
+  async function initComparison() {
+    try {
+      dualViewer = await initDualViewer(
+        'viewer-original', originalUrl,
+        'viewer-encoded',  encodedUrl,
+        true
+      );
+      syncBackground(dualViewer.v1);
+      syncBackground(dualViewer.v2);
+
+      // Fix 6: Left viewer = standard solid (MeshStandardMaterial)
+      setRenderMode(dualViewer.v1, 'solid');
+
+      // Fix 6: Right viewer = vertex color visualizer (MeshBasicMaterial + vertexColors)
+      setVertexColorMode(dualViewer.v2);
+    } catch (err) {
+      console.error('Dual viewer init failed:', err);
+    }
+  }
+
+  initComparison();
+
+  // Sync theme
+  const themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      setTimeout(() => {
+        if (dualViewer) {
+          syncBackground(dualViewer.v1);
+          syncBackground(dualViewer.v2);
+        }
+      }, 50);
+    });
+  }
+</script>
+{% endblock %}
