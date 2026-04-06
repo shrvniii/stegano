@@ -18,4 +18,4 @@ class Config:
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(QR_FOLDER,     exist_ok=True)
     os.makedirs(MODELS_FOLDER, exist_ok=True)
-    os.makedirs("static/thumbnails", exist_ok=True)
+    os.makedirs("static/models/thumbnails", exist_ok=True)

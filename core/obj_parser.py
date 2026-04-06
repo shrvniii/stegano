@@ -58,3 +58,30 @@ def get_capacity(filepath):
     """
     vertex_count = get_vertex_count(filepath)
     return (vertex_count * 3) // 8
+def get_models_list(folder):
+    """
+    Returns a list of all models in the folder with metadata.
+    """
+    import os
+    if not os.path.exists(folder):
+        return []
+
+    models = []
+    for filename in sorted(os.listdir(folder)):
+        if not filename.endswith(".obj"):
+            continue
+
+        filepath     = os.path.join(folder, filename)
+        vertex_count = get_vertex_count(filepath)
+        capacity     = get_capacity(filepath)
+
+        models.append({
+            "filename":      filename,
+            "name":          filename.replace(".obj", "").replace("_", " ").title(),
+            "vertex_count":  vertex_count,
+            "capacity_bits": capacity * 8, 
+            "capacity_chars": capacity,
+            "obj_url":       f"/static/models/{filename}",
+            "thumbnail_url": f"/static/models/thumbnails/{filename.replace('.obj', '.png')}",
+        })
+    return models

@@ -2,13 +2,24 @@
 
 import os
 import uuid
-from flask import Blueprint, request, jsonify, current_app
-from core.obj_parser import parse_obj, write_obj, get_capacity
+from flask import Blueprint, request, jsonify, current_app, render_template
+from core.obj_parser import parse_obj, write_obj, get_capacity, get_models_list
 from core.steganography import encode_message
 from core.crypto import encrypt_message, hash_message
 from core.qr_generator import generate_qr_pair
 
 encode_bp = Blueprint("encode", __name__)
+
+@encode_bp.route("/encode", methods=["GET"])
+def encode_page():
+    """Renders Shravani's HTML encoder page."""
+    folder = current_app.config.get("MODELS_FOLDER", "static/models")
+    return render_template("encode.html", models=get_models_list(folder))
+
+@encode_bp.route("/result", methods=["GET"])
+def result_page():
+    """Renders Shravani's HTML result page."""
+    return render_template("result.html")
 
 @encode_bp.route("/encode", methods=["POST"])
 def encode():
@@ -24,11 +35,13 @@ def encode():
 
     # --- 3. Save uploaded OBJ temporarily ---
     upload_folder = current_app.config["UPLOAD_FOLDER"]
+    encoded_folder = os.path.join(current_app.static_folder, "encoded_output")
+    os.makedirs(encoded_folder, exist_ok=True)
     unique_id = str(uuid.uuid4())[:8]
     input_filename = f"input_{unique_id}.obj"
     output_filename = f"encoded_{unique_id}.obj"
     input_path = os.path.join(upload_folder, input_filename)
-    output_path = os.path.join(upload_folder, output_filename)
+    output_path = os.path.join(encoded_folder, output_filename)
     obj_file.save(input_path)
 
     # --- 4. Check capacity before doing anything ---

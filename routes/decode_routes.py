@@ -2,12 +2,17 @@
 
 import os
 import uuid
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, render_template
 from core.obj_parser import parse_obj
 from core.steganography import decode_message
 from core.crypto import decrypt_message, hash_message, verify_integrity  # FIX: verify_hash → verify_integrity
 
 decode_bp = Blueprint("decode", __name__)
+
+@decode_bp.route("/decode", methods=["GET"])
+def decode_page():
+    """Renders Shravani's HTML decoder page."""
+    return render_template("decode.html")
 
 @decode_bp.route("/decode", methods=["POST"])
 def decode():
