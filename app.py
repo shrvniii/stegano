@@ -55,9 +55,9 @@ if __name__ == "__main__":
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
 
     # Temporary File Cleanup (Task 3)
-    print("🧹 Cleaning up old temporary files...")
-    clear_folder(os.path.join(app.static_folder, "encoded_output"))
-    clear_folder(os.path.join(app.static_folder, "qr"))
+    # print("🧹 Cleaning up old temporary files...")
+    # clear_folder(os.path.join(app.static_folder, "encoded_output"))
+    # clear_folder(os.path.join(app.static_folder, "qr"))
     
     print("🚀 3D Steganography Vault is running...")
     app.run(debug=Config.DEBUG, port=5000)

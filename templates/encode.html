@@ -261,13 +261,13 @@ steganography and AES-256 encryption.{% endblock %} {% block content %}
       </div>
 
       <!-- Section G: Backend Processing HUD (Hidden by default) -->
-      <div class="card hidden shadow-lg" id="backend-hud" style="margin-top: 1.5rem; border-color: #39FF14; background: #000; border-width: 2px;">
-        <div class="card__title" style="color: #39FF14; font-family: monospace; font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
+      <div class="card hidden shadow-lg" id="backend-hud" style="margin-top: 1.5rem; border-color: var(--accent); background: #fff; border-width: 2px;">
+        <div class="card__title" style="color: #2d2d2d; font-family: monospace; font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span class="pulse-dot"></span> 
             <span>BACKEND_STATUS: <span id="hud-status-text">PROCESSING...</span></span>
           </div>
-          <span style="font-size: 10px; opacity: 0.6;">VAULT_V2.1</span>
+          <span style="font-size: 10px; opacity: 0.5;">VAULT_V2.1</span>
         </div>
         
         <div id="console-logs" class="console-box">
@@ -279,7 +279,7 @@ steganography and AES-256 encryption.{% endblock %} {% block content %}
         </div>
 
         <div id="hud-actions" class="hidden" style="margin-top: 1.5rem; text-align: right;">
-          <button id="hud-next-btn" class="btn btn-secondary" style="background: transparent; border: 1px solid #39FF14; color: #39FF14; font-size: 0.75rem; letter-spacing: 1px; padding: 10px 20px;">
+          <button id="hud-next-btn" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--accent); color: var(--accent); font-size: 0.75rem; letter-spacing: 1px; padding: 10px 20px;">
             🚀 LAUNCH COMPARISON →
           </button>
         </div>
@@ -361,8 +361,8 @@ steganography and AES-256 encryption.{% endblock %} {% block content %}
     opacity: 1;
   }
   .console-box {
-    background: #000;
-    color: #39FF14;
+    background: #fdfbed; /* Premium Beige background */
+    color: #2d2d2d !important; /* High-contrast dark charcoal text */
     font-family: 'JetBrains Mono', 'Courier New', monospace;
     font-size: 11px;
     padding: 12px;
@@ -370,21 +370,26 @@ steganography and AES-256 encryption.{% endblock %} {% block content %}
     overflow-y: auto;
     border-radius: 4px;
     margin-top: 8px;
-    border: 1px solid rgba(57, 255, 20, 0.2);
+    border: 1px solid rgba(181, 69, 27, 0.2); /* Matching project accent opacity */
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
   }
   .console__line {
-    margin-bottom: 4px;
-    opacity: 0.7;
+    margin-bottom: 6px;
+    opacity: 1 !important;
+    color: #2d2d2d !important;
+    border-left: 2px solid transparent;
+    padding-left: 8px;
   }
   .console__line.active {
-    opacity: 1;
-    color: #fff;
+    background: rgba(181, 69, 27, 0.05);
+    border-left: 2px solid var(--accent);
+    font-weight: 600;
   }
   .pulse-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #39FF14;
+    background: var(--accent);
     animation: pulse 1.5s infinite;
   }
   @keyframes pulse {
@@ -395,7 +400,7 @@ steganography and AES-256 encryption.{% endblock %} {% block content %}
   .progress-track {
     width: 100%;
     height: 4px;
-    background: rgba(57, 255, 20, 0.1);
+    background: rgba(0, 0, 0, 0.05);
     margin-top: 12px;
     border-radius: 2px;
     overflow: hidden;
@@ -403,14 +408,12 @@ steganography and AES-256 encryption.{% endblock %} {% block content %}
   .progress-fill {
     width: 0%;
     height: 100%;
-    background: #39FF14;
+    background: var(--accent);
     transition: width 0.3s ease;
-    box-shadow: 0 0 10px #39FF14;
+    box-shadow: 0 0 10px rgba(181, 69, 27, 0.2);
   }
-  .log-sys { color: #888; }
-  .log-sec { color: #00FFFF; }
-  .log-alg { color: #eab308; }
-  .log-success { color: #39FF14; font-weight: bold; }
+  .log-sys, .log-sec, .log-alg, .log-success { color: #2d2d2d !important; }
+  .log-success { font-weight: bold; }
   
   #hud-next-btn {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

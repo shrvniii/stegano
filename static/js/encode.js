@@ -203,6 +203,8 @@ function setupAesToggle() {
   if (!aesToggle || !decoyField) return;
   aesToggle.addEventListener("change", () => {
     decoyField.style.display = aesToggle.checked ? "block" : "none";
+    // Recalculate capacity when encryption is toggled (Task 3 refinement)
+    updateAllCapacityBars();
   });
 }
 
@@ -270,19 +272,53 @@ function selectModelCard(card, model) {
 }
 
 /* ── Message Counter & Capacity ─────────────────────────────────── */
+
+/** calculates required bits including encryption expansion, hashes, and delimiters (Task 3 & 4 refinement) */
+function getRequiredBits() {
+  if (!msgTextarea) return 0;
+  const msgLen = msgTextarea.value.length;
+  if (msgLen === 0) return 0;
+  
+  // 1. Text components: Separator ("|||HASH:") + 64-char hex hash
+  const hashOverhead = 8 + 64; 
+  
+  let payloadChars = 0;
+  
+  if (aesToggle && aesToggle.checked) {
+    // Exact AES-256 CBC + Base64 expansion
+    // salt (16) + iv (16) = 32 bytes
+    const binaryOverhead = 32;
+    // CBC Padding: blocks of 16 bytes
+    const paddedMsgSize = Math.ceil((msgLen || 1) / 16) * 16;
+    const totalBinary = binaryOverhead + paddedMsgSize;
+    // Base64 expansion: 每3个字符变成4个Base64字符
+    payloadChars = Math.ceil(totalBinary / 3) * 4;
+  } else {
+    payloadChars = msgLen;
+  }
+
+  const finalPayloadChars = payloadChars + hashOverhead;
+  // 3. Final bit count + bits marking the Delimiter (16 bits)
+  return (finalPayloadChars * 8) + 16;
+}
+
 function setupMessageCounter() {
   if (!msgTextarea) return;
   msgTextarea.addEventListener("input", () => {
     const len = msgTextarea.value.length;
-    const bits = len * 8; // Task 2 step 4
+    const bits = getRequiredBits();
     if (charCount) charCount.textContent = `${len} characters`;
     if (bitsNeeded) bitsNeeded.textContent = `${bits} bits needed`;
-    updateAllCapacityBars(); // Task 2 step 5
+    updateAllCapacityBars();
   });
 }
 
 function updateAllCapacityBars() {
-  const bits = msgTextarea ? msgTextarea.value.length * 8 : 0;
+  const bits = getRequiredBits();
+  
+  // Update the UI header too
+  if (bitsNeeded) bitsNeeded.textContent = `${bits} bits needed`;
+
   document.querySelectorAll(".model-card").forEach((card) => {
     const cap = parseInt(card.dataset.capacityBits, 10) || 0;
     const bar = card.querySelector(".cap-bar");
@@ -290,11 +326,10 @@ function updateAllCapacityBars() {
 
     if (bar) {
       bar.style.width = pct + "%";
-      bar.className =
-        "cap-bar" + (pct > 80 ? " high" : pct > 50 ? " medium" : "");
+      bar.className = "cap-bar" + (pct > 95 ? " high" : pct > 60 ? " medium" : "");
     }
 
-    // Disable card if message is too big (Task 2 step 5)
+    // Disable card if message + overhead is too big
     if (bits > 0 && bits > cap) {
       card.classList.add("disabled");
       if (card.classList.contains("selected")) {
