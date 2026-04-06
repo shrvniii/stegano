@@ -36,11 +36,28 @@ def download_file(filename):
     encoded_dir = os.path.join(app.static_folder, "encoded_output")
     return send_from_directory(encoded_dir, filename, as_attachment=True)
 
+def clear_folder(path):
+    """Deletes all files within a folder to keep the app clean."""
+    if not os.path.exists(path):
+        return
+    for file in os.listdir(path):
+        file_path = os.path.join(path, file)
+        try:
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            print(f"Cleanup error for {file}: {e}")
+
 if __name__ == "__main__":
     # Ensure directories exist
     os.makedirs(os.path.join(app.static_folder, "encoded_output"), exist_ok=True)
     os.makedirs(os.path.join(app.static_folder, "qr"), exist_ok=True)
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
+
+    # Temporary File Cleanup (Task 3)
+    print("🧹 Cleaning up old temporary files...")
+    clear_folder(os.path.join(app.static_folder, "encoded_output"))
+    clear_folder(os.path.join(app.static_folder, "qr"))
     
     print("🚀 3D Steganography Vault is running...")
     app.run(debug=Config.DEBUG, port=5000)

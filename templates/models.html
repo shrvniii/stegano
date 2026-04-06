@@ -1,44 +1,45 @@
-{% extends "base.html" %}
-
-{% block title %}3D Model Library{% endblock %}
-{% block meta_desc %}Browse preloaded 3D models for steganography encoding — Teapot, Cube, Icosahedron. Upload your own OBJ files.{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}3D Model Library{% endblock %} {%
+block meta_desc %}Browse preloaded 3D models for steganography encoding —
+Teapot, Cube, Icosahedron. Upload your own OBJ files.{% endblock %} {% block
+content %}
 <div class="container">
   <div class="page-header">
     <div class="section__label">Model Library</div>
     <h1 class="page-header__title" id="models-heading">3D Model Library</h1>
     <p class="page-header__subtitle">
-      Choose a preloaded model or upload your own <code>.OBJ</code> file.
-      Each model supports a different message capacity based on its vertex count.
+      Choose a preloaded model or upload your own <code>.OBJ</code> file. Each
+      model supports a different message capacity based on its vertex count.
     </p>
   </div>
 
   <!-- ── Model Grid ──────────────────────────────────────────────── -->
   <section aria-labelledby="models-heading">
-    <div class="model-grid" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));" id="models-library-grid">
-
+    <div
+      class="model-grid"
+      style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))"
+      id="models-library-grid"
+    >
       {% if models %}
         {% for model in models %}
-        <article class="model-card" id="lib-model-{{ model.name }}" style="cursor:default;">
+        <article class="model-card" id="lib-model-{{ model.slug }}" style="cursor:default;">
           <img
-            src="{{ url_for('static', filename='models/thumbnails/' ~ model.name ~ '.png') }}"
-            alt="{{ model.name | capitalize }} 3D model preview"
+            src="{{ model.thumbnail_url }}"
+            alt="{{ model.name }} 3D model preview"
             class="model-card__thumb"
             loading="lazy"
           />
           <div class="model-card__body" style="padding:1rem;">
-            <div class="model-card__name" style="font-size:1.05rem;">{{ model.name | capitalize }}</div>
+            <div class="model-card__name" style="font-size:1.05rem;">{{ model.name }}</div>
             <div class="model-card__meta" style="margin-top:0.35rem;">
               {{ model.vertex_count }} vertices &nbsp;·&nbsp;
-              Max {{ (model.capacity_bits // 8) }} characters
+              Max {{ model.capacity_chars }} characters
             </div>
             <div style="margin-top:0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
               <a
-                href="/encode?model={{ model.name }}"
+                href="/encode?model={{ model.slug }}"
                 class="btn btn-primary"
                 style="font-size:0.82rem; padding:0.4rem 1rem;"
-                id="select-{{ model.name }}"
+                id="select-{{ model.slug }}"
               >
                 Select for Encoding
               </a>
@@ -46,7 +47,7 @@
                 class="btn btn-outline model-preview-btn"
                 style="font-size:0.82rem; padding:0.4rem 1rem;"
                 data-name="{{ model.name }}"
-                data-obj="/static/models/{{ model.name }}.obj"
+                data-obj="{{ model.obj_url }}"
               >
                 👁️ Preview
               </button>
@@ -54,178 +55,260 @@
           </div>
         </article>
         {% endfor %}
-
       {% else %}
-        <!-- Fallback defaults -->
-        {% for name, verts, cap_chars in [('teapot', 222, 533), ('cube', 8, 19), ('icosahedron', 12, 28)] %}
-        <article class="model-card" id="lib-model-{{ name }}" style="cursor:default;">
-          <img
-            src="{{ url_for('static', filename='models/thumbnails/' ~ name ~ '.png') }}"
-            alt="{{ name | capitalize }} 3D model preview"
-            class="model-card__thumb"
-            loading="lazy"
-          />
-          <div class="model-card__body" style="padding:1rem;">
-            <div class="model-card__name" style="font-size:1.05rem;">{{ name | capitalize }}</div>
-            <div class="model-card__meta" style="margin-top:0.35rem;">
-              {{ verts }} vertices &nbsp;·&nbsp;
-              Max {{ cap_chars }} characters
-            </div>
-            <div style="margin-top:0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-              <a
-                href="/encode?model={{ name }}"
-                class="btn btn-primary"
-                style="font-size:0.82rem; padding:0.4rem 1rem;"
-                id="select-{{ name }}"
-              >
-                Select for Encoding
-              </a>
-              <button
-                class="btn btn-outline model-preview-btn"
-                style="font-size:0.82rem; padding:0.4rem 1rem;"
-                data-name="{{ name }}"
-                data-obj="/static/models/{{ name }}.obj"
-              >
-                👁️ Preview
-              </button>
-            </div>
+      <!-- Fallback defaults -->
+      {% for name, verts, cap_chars in [('teapot', 222, 533), ('cube', 8, 19),
+      ('icosahedron', 12, 28)] %}
+      <article
+        class="model-card"
+        id="lib-model-{{ name }}"
+        style="cursor: default"
+      >
+        <img
+          src="{{ url_for('static', filename='models/thumbnails/' ~ name ~ '.png') }}"
+          alt="{{ name | capitalize }} 3D model preview"
+          class="model-card__thumb"
+          loading="lazy"
+        />
+        <div class="model-card__body" style="padding: 1rem">
+          <div class="model-card__name" style="font-size: 1.05rem">
+            {{ name | capitalize }}
           </div>
-        </article>
-        {% endfor %}
-      {% endif %}
-
+          <div class="model-card__meta" style="margin-top: 0.35rem">
+            {{ verts }} vertices &nbsp;·&nbsp; Max {{ cap_chars }} characters
+          </div>
+          <div
+            style="
+              margin-top: 0.75rem;
+              display: flex;
+              gap: 0.5rem;
+              flex-wrap: wrap;
+            "
+          >
+            <a
+              href="/encode?model={{ name }}"
+              class="btn btn-primary"
+              style="font-size: 0.82rem; padding: 0.4rem 1rem"
+              id="select-{{ name }}"
+            >
+              Select for Encoding
+            </a>
+            <button
+              class="btn btn-outline model-preview-btn"
+              style="font-size: 0.82rem; padding: 0.4rem 1rem"
+              data-name="{{ name }}"
+              data-obj="/static/models/{{ name }}.obj"
+            >
+              👁️ Preview
+            </button>
+          </div>
+        </div>
+      </article>
+      {% endfor %} {% endif %}
     </div>
   </section>
 
   <!-- ── 3D Preview Panel ────────────────────────────────────────── -->
-  <section class="section" id="models-preview-section" style="display:none;" aria-labelledby="preview-heading">
-    <div class="card" style="padding:0;">
+  <section
+    class="section"
+    id="models-preview-section"
+    style="display: none"
+    aria-labelledby="preview-heading"
+  >
+    <div class="card" style="padding: 0">
       <div class="viewer-toolbar">
-        <span class="viewer-toolbar__label" id="preview-heading">3D Preview</span>
-        <span id="preview-model-name" style="font-weight:600; font-size:0.9rem; color:var(--text-primary); margin-right:auto;"></span>
-        <button class="btn-mode active" data-mode="solid"     id="lib-mode-solid">Solid</button>
-        <button class="btn-mode"        data-mode="wireframe" id="lib-mode-wireframe">Wireframe</button>
-        <button class="btn-mode"        data-mode="vertex"    id="lib-mode-vertex">Vertex</button>
+        <span class="viewer-toolbar__label" id="preview-heading"
+          >3D Preview</span
+        >
+        <span
+          id="preview-model-name"
+          style="
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin-right: auto;
+          "
+        ></span>
+        <button class="btn-mode active" data-mode="solid" id="lib-mode-solid">
+          Solid
+        </button>
+        <button class="btn-mode" data-mode="wireframe" id="lib-mode-wireframe">
+          Wireframe
+        </button>
+        <button class="btn-mode" data-mode="vertex" id="lib-mode-vertex">
+          Vertex
+        </button>
       </div>
-      <div id="lib-viewer-container" style="height:450px;" role="img" aria-label="3D model preview"></div>
+      <div
+        id="lib-viewer-container"
+        style="height: 450px"
+        role="img"
+        aria-label="3D model preview"
+      ></div>
     </div>
   </section>
 
   <!-- ── Upload Custom Model ─────────────────────────────────────── -->
   <section class="section" aria-labelledby="upload-heading">
     <div class="section__label">Custom Model</div>
-    <h2 id="upload-heading" style="margin-bottom:0.5rem;">Upload Your Own Model</h2>
-    <p style="max-width:500px; margin-bottom:1.5rem; color:var(--text-secondary);">
-      Drag and drop a <code>.OBJ</code> file below. It will be validated for vertex color capacity
-      and made available for encoding.
+    <h2 id="upload-heading" style="margin-bottom: 0.5rem">
+      Upload Your Own Model
+    </h2>
+    <p
+      style="
+        max-width: 500px;
+        margin-bottom: 1.5rem;
+        color: var(--text-secondary);
+      "
+    >
+      Drag and drop a <code>.OBJ</code> file below. It will be validated for
+      vertex color capacity and made available for encoding.
     </p>
 
-    <div class="card" style="max-width:560px;">
+    <div class="card" style="max-width: 560px">
       <div
         class="dropzone"
         id="lib-dropzone"
         role="button"
         tabindex="0"
         aria-label="Drop or browse OBJ file"
-        onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('lib-obj-upload').click()"
+        onkeydown="
+          if (event.key === 'Enter' || event.key === ' ')
+            document.getElementById('lib-obj-upload').click();
+        "
       >
-        <input type="file" id="lib-obj-upload" accept=".obj" aria-label="Upload OBJ model file" />
+        <input
+          type="file"
+          id="lib-obj-upload"
+          accept=".obj"
+          aria-label="Upload OBJ model file"
+        />
         <span class="dropzone__icon" aria-hidden="true">📦</span>
-        <div class="dropzone__label"><strong>Drag &amp; drop</strong> your <code>.OBJ</code> file here</div>
+        <div class="dropzone__label">
+          <strong>Drag &amp; drop</strong> your <code>.OBJ</code> file here
+        </div>
         <div class="dropzone__hint">or click to browse — .OBJ files only</div>
-        <div class="dropzone__filename" id="lib-drop-filename" aria-live="polite"></div>
+        <div
+          class="dropzone__filename"
+          id="lib-drop-filename"
+          aria-live="polite"
+        ></div>
       </div>
 
-      <div style="margin-top:1rem; text-align:center;">
-        <a href="/encode" class="btn btn-outline" style="font-size:0.85rem;" id="lib-go-encode">
+      <div style="margin-top: 1rem; text-align: center">
+        <a
+          href="/encode"
+          class="btn btn-outline"
+          style="font-size: 0.85rem"
+          id="lib-go-encode"
+        >
           Go to Encode Page →
         </a>
       </div>
     </div>
   </section>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script type="module">
-  import { initViewer, setRenderMode, syncBackground, renderThumbnail } from '/static/js/viewer.js';
+  import {
+    initViewer,
+    setRenderMode,
+    syncBackground,
+    renderThumbnail,
+  } from "/static/js/viewer.js";
 
   // Fix 1: Dynamically render model thumbnails from actual geometry
   document.querySelectorAll('.model-card').forEach(card => {
-    const id   = card.id; // e.g. "lib-model-teapot"
-    const name = id.replace('lib-model-', '');
-    const img  = card.querySelector('.model-card__thumb');
-    if (name && img) {
-      renderThumbnail(img, '/static/models/' + name + '.obj');
+    const img    = card.querySelector('.model-card__thumb');
+    const btn    = card.querySelector('.model-preview-btn');
+    const objUrl = btn ? btn.dataset.obj : null;
+    
+    if (img && objUrl) {
+      renderThumbnail(img, objUrl);
     }
   });
 
   let activeViewer = null;
 
   // ── Preview buttons ──────────────────────────────────────────
-  document.querySelectorAll('.model-preview-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const name   = btn.dataset.name;
+  document.querySelectorAll(".model-preview-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const name = btn.dataset.name;
       const objUrl = btn.dataset.obj;
-      const section = document.getElementById('models-preview-section');
-      const nameEl  = document.getElementById('preview-model-name');
+      const section = document.getElementById("models-preview-section");
+      const nameEl = document.getElementById("preview-model-name");
 
-      section.style.display = 'block';
+      section.style.display = "block";
       nameEl.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      if (activeViewer) { activeViewer.dispose(); activeViewer = null; }
+      if (activeViewer) {
+        activeViewer.dispose();
+        activeViewer = null;
+      }
 
-      const container = document.getElementById('lib-viewer-container');
-      container.innerHTML = '<div class="viewer-empty"><span class="viewer-empty__icon">⏳</span>Loading…</div>';
+      const container = document.getElementById("lib-viewer-container");
+      container.innerHTML =
+        '<div class="viewer-empty"><span class="viewer-empty__icon">⏳</span>Loading…</div>';
 
       try {
-        activeViewer = await initViewer('lib-viewer-container', objUrl);
+        activeViewer = await initViewer("lib-viewer-container", objUrl, name);
         syncBackground(activeViewer);
 
         // Reset mode buttons
-        document.querySelectorAll('#models-preview-section .btn-mode').forEach(b => b.classList.remove('active'));
-        document.getElementById('lib-mode-solid').classList.add('active');
+        document
+          .querySelectorAll("#models-preview-section .btn-mode")
+          .forEach((b) => b.classList.remove("active"));
+        document.getElementById("lib-mode-solid").classList.add("active");
       } catch (e) {
-        container.innerHTML = '<div class="viewer-empty"><span class="viewer-empty__icon">⚠️</span>Failed to load model</div>';
+        container.innerHTML =
+          '<div class="viewer-empty"><span class="viewer-empty__icon">⚠️</span>Failed to load model</div>';
       }
     });
   });
 
   // ── Render mode buttons ──────────────────────────────────────
-  document.querySelectorAll('#models-preview-section .btn-mode').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#models-preview-section .btn-mode').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      if (activeViewer) setRenderMode(activeViewer, btn.dataset.mode);
+  document
+    .querySelectorAll("#models-preview-section .btn-mode")
+    .forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document
+          .querySelectorAll("#models-preview-section .btn-mode")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (activeViewer) setRenderMode(activeViewer, btn.dataset.mode);
+      });
     });
-  });
 
   // ── Dropzone ─────────────────────────────────────────────────
-  const dz = document.getElementById('lib-dropzone');
-  const fi = document.getElementById('lib-obj-upload');
-  const fn = document.getElementById('lib-drop-filename');
+  const dz = document.getElementById("lib-dropzone");
+  const fi = document.getElementById("lib-obj-upload");
+  const fn = document.getElementById("lib-drop-filename");
 
   if (dz) {
-    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
-    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
-    dz.addEventListener('drop', e => {
+    dz.addEventListener("dragover", (e) => {
       e.preventDefault();
-      dz.classList.remove('dragover');
+      dz.classList.add("dragover");
+    });
+    dz.addEventListener("dragleave", () => dz.classList.remove("dragover"));
+    dz.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dz.classList.remove("dragover");
       const file = e.dataTransfer.files[0];
-      if (file && file.name.toLowerCase().endsWith('.obj')) {
+      if (file && file.name.toLowerCase().endsWith(".obj")) {
         fn.textContent = file.name;
       }
     });
-    if (fi) fi.addEventListener('change', () => {
-      if (fi.files[0]) fn.textContent = fi.files[0].name;
-    });
+    if (fi)
+      fi.addEventListener("change", () => {
+        if (fi.files[0]) fn.textContent = fi.files[0].name;
+      });
   }
 
   // ── Sync theme ───────────────────────────────────────────────
-  const themeBtn = document.getElementById('theme-toggle');
+  const themeBtn = document.getElementById("theme-toggle");
   if (themeBtn) {
-    themeBtn.addEventListener('click', () => {
+    themeBtn.addEventListener("click", () => {
       setTimeout(() => syncBackground(activeViewer), 50);
     });
   }

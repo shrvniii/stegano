@@ -63,15 +63,18 @@
       <div class="card__title">Password Key</div>
       <div class="form-group" style="margin-bottom:0;">
         <label for="decode-password">Enter Password Key</label>
-        <input
-          type="password"
-          id="decode-password"
-          name="key"
-          class="input"
-          placeholder="Enter the password used during encoding…"
-          autocomplete="off"
-          aria-describedby="decode-hint"
-        />
+        <div class="password-wrap">
+          <input
+            type="password"
+            id="decode-password"
+            name="key"
+            class="input"
+            placeholder="Enter the password used during encoding…"
+            autocomplete="off"
+            aria-describedby="decode-hint"
+          />
+          <button class="toggle-pw" id="btn-toggle-pw" type="button" title="Show/hide password">👁️</button>
+        </div>
         <p id="decode-hint" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">
           💡 Upload QR2 below to auto-fill this field
         </p>
@@ -112,9 +115,10 @@
       <div class="card">
         <div class="card__title">Hidden Message Revealed</div>
 
-        <div class="message-box">
+        <div class="message-box" style="position:relative;">
           <div class="message-box__label">Decoded Message</div>
-          <div id="decoded-text"></div>
+          <div id="decoded-text" style="min-height:50px;"></div>
+          <button class="btn btn-outline btn-sm" id="btn-copy-msg" style="position:absolute; top:0.5rem; right:0.5rem;">📋 Copy</button>
         </div>
 
         <div style="margin-top:1.25rem; text-align:center;">
@@ -123,8 +127,63 @@
       </div>
     </div>
 
+    <!-- ── Decode History (Pari's Merge) ──────────────────────── -->
+    <div class="card" id="history-section" style="margin-top:2rem;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+        <div class="card__title" style="margin-bottom:0;">📜 Session History</div>
+        <button class="btn btn-outline btn-sm" id="btn-clear-history">Clear</button>
+      </div>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem;">
+        Last 20 decodes in this session. Cleared on refresh.
+      </p>
+      <ul class="history-list" id="history-list" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.6rem;">
+        <li id="history-empty" style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:1rem 0;">
+          No decodes yet this session.
+        </li>
+      </ul>
+    </div>
+
   </div><!-- /decode-center-col -->
 </div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  .history-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.6rem 1rem;
+    align-items: start;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 0.6rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+  }
+  .hist-time { color: var(--text-muted); white-space: nowrap; }
+  .hist-msg { color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hist-badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+  .hist-badge.ok   { background: #d1fae5; color: #065f46; }
+  .hist-badge.fail { background: #fee2e2; color: #991b1b; }
+  
+  .password-wrap { display: flex; gap: 0.5rem; position: relative; }
+  .toggle-pw {
+    position: absolute;
+    right: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+  }
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -168,7 +227,80 @@
     hideAlert();
   }
 
-  // ── QR Code Decoder Helper ───────────────────────────────────
+  const historyList  = document.getElementById('history-list');
+  const historyEmpty = document.getElementById('history-empty');
+  const clearHistBtn = document.getElementById('btn-clear-history');
+  const togglePwBtn  = document.getElementById('btn-toggle-pw');
+  const copyBtn      = document.getElementById('btn-copy-msg');
+
+  const HISTORY_KEY = "stegvault_decode_history";
+
+  function getHistory() {
+    try { return JSON.parse(sessionStorage.getItem(HISTORY_KEY) || "[]"); }
+    catch { return []; }
+  }
+
+  function saveHistory(arr) {
+    sessionStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+  }
+
+  function addHistoryEntry(entry) {
+    const arr = getHistory();
+    arr.unshift(entry);
+    saveHistory(arr.slice(0, 20)); // last 20
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const arr = getHistory();
+    if (!historyList) return;
+    if (arr.length === 0) {
+      if (historyEmpty) historyEmpty.style.display = 'block';
+      [...historyList.querySelectorAll('.history-item')].forEach(el => el.remove());
+      return;
+    }
+    if (historyEmpty) historyEmpty.style.display = 'none';
+    historyList.innerHTML = "";
+    arr.forEach(entry => {
+      const li = document.createElement('li');
+      li.className = 'history-item';
+      li.innerHTML = `
+        <span class="hist-time">${entry.time}</span>
+        <span class="hist-msg" title="${entry.message}">${entry.message.slice(0, 50)}${entry.message.length > 50 ? '...' : ''}</span>
+        <span class="hist-badge ${entry.integrity ? 'ok' : 'fail'}">${entry.integrity ? '✓ OK' : '✕ Fail'}</span>
+      `;
+      historyList.appendChild(li);
+    });
+  }
+
+  if (clearHistBtn) {
+    clearHistBtn.addEventListener('click', () => {
+      sessionStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+    });
+  }
+
+  if (togglePwBtn) {
+    togglePwBtn.addEventListener('click', () => {
+      const isPw = passInput.type === 'password';
+      passInput.type = isPw ? 'text' : 'password';
+      togglePwBtn.textContent = isPw ? '🙈' : '👁️';
+    });
+  }
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      const text = decodedText.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const oldText = copyBtn.textContent;
+        copyBtn.textContent = '✅ Copied!';
+        setTimeout(() => copyBtn.textContent = oldText, 2000);
+      });
+    });
+  }
+
+  // Initial render
+  renderHistory();
   function decodeQRFromFile(file, callback) {
     const img = new Image();
     img.onload = function() {
@@ -271,6 +403,13 @@
       }
 
       decodedText.textContent = data.message || '(empty message)';
+
+      // Pari's Merge: Add to history
+      addHistoryEntry({
+        time: new Date().toLocaleTimeString(),
+        message: data.message || "(empty)",
+        integrity: data.integrity_ok
+      });
 
       if (data.integrity_ok) {
         intBadge.className = 'integrity-badge ok';

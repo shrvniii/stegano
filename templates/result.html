@@ -36,88 +36,73 @@
     {% endif %}
   </section>
 
-  <!-- ── QR Codes ──────────────────────────────────────────────── -->
-  <section aria-labelledby="qr-heading">
-    <div class="section__label">QR Codes</div>
-    <h2 id="qr-heading" style="margin-bottom:0.5rem;">Share securely</h2>
-    <p style="color:var(--text-secondary); margin-bottom:1rem;">
-      Share QR1 publicly. Only share QR2 with the intended receiver through a secure channel.
-    </p>
-
-    <div class="qr-grid">
-      <!-- QR1 — Public -->
-      <div class="qr-card" id="qr1-card">
-        <div class="qr-card__label">📂 QR1: Share publicly</div>
-        <div class="qr-card__hint">Links to the encoded .OBJ file download</div>
-        {% if result.qr_file %}
-          <img src="{{ result.qr_file }}" alt="QR Code 1 — public file link" id="qr1-img" />
-        {% else %}
-          <div style="width:200px;height:200px;margin:0 auto 1rem;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.85rem;">
-            QR1 will appear here
-          </div>
-        {% endif %}
-        <a
-          href="{{ result.qr_file or '#' }}"
-          download="steg_vault_qr1_public.png"
-          class="btn btn-outline"
-          style="font-size:0.85rem;"
-          id="download-qr1"
-        >
-          ⬇ Download QR1
-        </a>
+  <!-- ── Pari's Premium QR Section ───────────────────────────── -->
+  <section class="qr-section" style="display:flex; align-items:flex-start; gap:1.5rem; justify-content:center; flex-wrap:wrap; margin-bottom:3.5rem;">
+    <!-- Public QR1 -->
+    <div class="qr-card qr1" style="background:var(--surface); border:1.5px solid var(--border); border-radius:1rem; padding:1.6rem; width:280px; display:flex; flex-direction:column; align-items:center; gap:0.8rem; transition:transform 0.2s;">
+      <div style="font-size:0.68rem; font-weight:700; background:#dbeafe; color:#1d4ed8; padding:0.25rem 0.7rem; border-radius:999px;">PUBLIC</div>
+      <img src="{{ result.qr_file }}" alt="QR1" style="width:200px; height:200px; border-radius:0.5rem; border:1px solid var(--border);">
+      <div style="display:flex; flex-direction:column; align-items:center;">
+        <span style="font-weight:700;">QR 1</span>
+        <span style="font-size:0.8rem; color:var(--text-muted);">Encoded File Link</span>
       </div>
-
-      <!-- QR2 — Private -->
-      <div class="qr-card" id="qr2-card">
-        <div class="qr-card__label">🔑 QR2: Share privately</div>
-        <div class="qr-card__hint">Encodes the password key</div>
-        {% if result.qr_key %}
-          <img src="{{ result.qr_key }}" alt="QR Code 2 — private key" id="qr2-img" />
-        {% else %}
-          <div style="width:200px;height:200px;margin:0 auto 1rem;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.85rem;">
-            QR2 will appear here
-          </div>
-        {% endif %}
-        <a
-          href="{{ result.qr_key or '#' }}"
-          download="steg_vault_qr2_private.png"
-          class="btn btn-outline"
-          style="font-size:0.85rem;"
-          id="download-qr2"
-        >
-          ⬇ Download QR2
-        </a>
+      <p style="font-size:0.75rem; color:var(--text-muted); text-align:center;">Share freely — anyone can see the model, but not the secret.</p>
+      
+      <div style="display:flex; flex-direction:column; gap:0.5rem; width:100%;">
+          <a class="btn btn-outline btn-sm" href="{{ result.qr_file }}" download="QR1_public.png" style="justify-content:center;">⬇ Download QR1</a>
+          <a href="{{ result.file_url }}" download class="btn btn-primary" style="justify-content:center; background:var(--accent-cyan); color:#000;">
+            📥 Download Encoded Model
+          </a>
       </div>
+    </div>
+
+    <!-- Divider icon -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:0.6rem; padding-top:4rem; color:var(--text-muted);">
+      <div style="width:2px; height:40px; background:var(--border);"></div>
+      <span style="font-size:1.4rem;">🔐</span>
+      <div style="width:2px; height:40px; background:var(--border);"></div>
+    </div>
+
+    <!-- Private QR2 -->
+    <div class="qr-card qr2" style="background:var(--surface); border:1.5px solid var(--border); border-radius:1rem; padding:1.6rem; width:280px; display:flex; flex-direction:column; align-items:center; gap:0.8rem; transition:transform 0.2s;">
+      <div style="font-size:0.68rem; font-weight:700; background:#fce7f3; color:#9d174d; padding:0.25rem 0.7rem; border-radius:999px;">PRIVATE</div>
+      <img src="{{ result.qr_key }}" alt="QR2" style="width:200px; height:200px; border-radius:0.5rem; border:1px solid var(--border);">
+      <div style="display:flex; flex-direction:column; align-items:center;">
+        <span style="font-weight:700;">QR 2</span>
+        <span style="font-size:0.8rem; color:var(--text-muted);">Secret Password Key</span>
+      </div>
+      <p style="font-size:0.75rem; color:var(--text-muted); text-align:center;">Share only with receiver via private channels.</p>
+      <a class="btn btn-secondary btn-sm" href="{{ result.qr_key }}" download="QR2_private.png">⬇ Download QR2</a>
     </div>
   </section>
 
-  <!-- ── Encoding Stats ─────────────────────────────────────────── -->
-  <section class="section" aria-labelledby="stats-heading">
-    <div class="section__label">Encoding Statistics</div>
-    <h2 id="stats-heading" style="margin-bottom:0.5rem;">Encoding Details</h2>
-
-    <div class="stats-grid" id="stats-grid">
-      <div class="stat-item">
-        <div class="stat-item__value">{{ result.stats.bits_used if result.stats else '—' }}</div>
-        <div class="stat-item__label">Bits Used</div>
+  <!-- ── Pari's Premium Stats Dashboard ─────────────────────── -->
+  <section style="margin-bottom:3.5rem;">
+    <div class="section__label">Dashboard</div>
+    <h2 style="margin-bottom:1.5rem;">Transmission Payload Stats</h2>
+    <div class="stats-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem;">
+      <div class="stat-card" style="background:var(--surface); border:1.5px solid var(--border); border-radius:0.9rem; padding:1.2rem; text-align:center;">
+        <div style="font-size:1.5rem; margin-bottom:0.4rem;">📦</div>
+        <div style="font-size:1.4rem; font-weight:700; color:var(--accent-cyan);">{{ result.stats.bits_used | default('—') }}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);">Bits Used</div>
       </div>
-      <div class="stat-item">
-        <div class="stat-item__value">{{ result.stats.capacity if result.stats else '—' }}</div>
-        <div class="stat-item__label">Capacity (Bits)</div>
+      <div class="stat-card" style="background:var(--surface); border:1.5px solid var(--border); border-radius:0.9rem; padding:1.2rem; text-align:center;">
+        <div style="font-size:1.5rem; margin-bottom:0.4rem;">🔬</div>
+        <div style="font-size:1.4rem; font-weight:700; color:var(--accent-cyan);">{{ result.stats.vertices_modified | default('—') }}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);">Vertices Modified</div>
       </div>
-      <div class="stat-item">
-        <div class="stat-item__value">{{ result.stats.percentage if result.stats else '—' }}%</div>
-        <div class="stat-item__label">Usage %</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-item__value" style="font-size:1rem;">
-          {% if result.stats and result.stats.encryption %}
-            🔒 AES-256
-          {% else %}
-            🔓 None
-          {% endif %}
+      <div class="stat-card" style="background:var(--surface); border:1.5px solid var(--border); border-radius:0.9rem; padding:1.2rem; text-align:center;">
+        <div style="font-size:1.5rem; margin-bottom:0.4rem;">🔋</div>
+        <div style="font-size:1.4rem; font-weight:700; color:var(--accent-cyan);">{{ result.stats.percentage | default('—') }}%</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);">Capacity Used</div>
+        <div style="margin-top:0.6rem; height:6px; background:var(--bg); border-radius:999px; overflow:hidden;">
+          <div style="height:100%; background:var(--accent-cyan); width:{{ result.stats.percentage | default(0) }}%;"></div>
         </div>
-        <div class="stat-item__label">Encryption</div>
+      </div>
+      <div class="stat-card" style="background:var(--surface); border:1.5px solid var(--border); border-radius:0.9rem; padding:1.2rem; text-align:center;">
+        <div style="font-size:1.5rem; margin-bottom:0.4rem;">🔒</div>
+        <div style="font-size:1.1rem; font-weight:700; color:var(--accent-cyan); margin-top:0.3rem;">{{ 'AES-256' if result.stats.encryption else 'None' }}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted);">Encryption</div>
       </div>
     </div>
   </section>
@@ -143,30 +128,22 @@
     </div>
 
     <div class="dual-viewer" id="dual-viewer-wrap">
-      <div>
-        <div class="viewer-panel">
-          <div class="viewer-toolbar" style="border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
-            <span class="viewer-toolbar__label">Original Model</span>
-          </div>
-          <div id="viewer-original" class="viewer-container" style="height:360px;">
-            <div class="viewer-empty"><span class="viewer-empty__icon">🧊</span>Original</div>
-          </div>
-        </div>
+      <div class="viewer-card">
+        <div class="viewer-tag">Original Mesh</div>
+        <div id="viewer-original" class="viewer-canvas-wrap"></div>
+        <div class="sync-indicator">Linked Perspective</div>
       </div>
-      <div>
-        <div class="viewer-panel">
-          <div class="viewer-toolbar" style="border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
-            <span class="viewer-toolbar__label" style="color:var(--accent-cyan);">Encoded Model</span>
-          </div>
-          <div id="viewer-encoded" class="viewer-container" style="height:360px;">
-            <div class="viewer-empty"><span class="viewer-empty__icon">🔐</span>Encoded</div>
-          </div>
-        </div>
+      <div class="viewer-card viewer-card--encoded">
+        <div class="viewer-tag viewer-tag--encoded">Hidden Data Layer</div>
+        <div id="viewer-encoded" class="viewer-canvas-wrap"></div>
+        <div class="sync-indicator">Linked Perspective</div>
       </div>
     </div>
   </section>
 </div>
 {% endblock %}
+
+
 
 {% block scripts %}
 <script type="module">
@@ -182,6 +159,7 @@
       dualViewer = await initDualViewer(
         'viewer-original', originalUrl,
         'viewer-encoded',  encodedUrl,
+        '{{ result.model_name }}', '{{ result.model_name }}',
         true
       );
       syncBackground(dualViewer.v1);
@@ -229,4 +207,74 @@
     });
   }
 </script>
+{% endblock %}
+
+{% block styles %}
+<style>
+  /* QR & Stat Cards */
+  .qr-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(181, 69, 27, 0.15); transition: transform 0.2s, box-shadow 0.2s; }
+  .btn-primary:hover, .btn-secondary:hover { opacity: 0.85; transform: translateY(-2px); transition: transform 0.15s; }
+  .stat-card:hover { transform: translateY(-2px); border-color: var(--accent) !important; transition: transform 0.2s; }
+
+  /* Dual Viewer Grid */
+  .dual-viewer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 32px;
+  }
+  @media (max-width: 800px) { .dual-viewer { grid-template-columns: 1fr; } }
+  
+  .viewer-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+  .viewer-card--encoded {
+    border-color: var(--accent);
+    box-shadow: 0 4px 24px rgba(181, 69, 27, 0.1);
+  }
+  .viewer-canvas-wrap {
+    height: 420px !important;
+    background: radial-gradient(circle at center, var(--surface) 0%, var(--bg) 100%);
+  }
+  .viewer-tag {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    padding: 6px 14px;
+    background: rgba(28, 26, 23, 0.85);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: 2px;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+  }
+  .viewer-tag--encoded {
+    background: var(--accent);
+  }
+  .sync-indicator {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.7);
+    padding: 4px 10px;
+    border-radius: 20px;
+    z-index: 10;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+</style>
 {% endblock %}

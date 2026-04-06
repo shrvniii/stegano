@@ -58,6 +58,9 @@ def get_capacity(filepath):
     """
     vertex_count = get_vertex_count(filepath)
     return (vertex_count * 3) // 8
+import os
+import urllib.parse
+
 def get_models_list(folder):
     """
     Returns a list of all models in the folder with metadata.
@@ -67,6 +70,15 @@ def get_models_list(folder):
         return []
 
     models = []
+    DESCRIPTIONS = {
+        "sphere.obj": "A smooth UV sphere — great for small messages.",
+        "teapot.obj": "The classic CG teapot — medium capacity.",
+        "bunny.obj": "High-vertex bunny — fits long messages easily.",
+        "dragon.obj": "Full-body dragon — ultimate capacity for huge data sets.",
+        "head.obj": "A stylised low-poly human head.",
+        "cube.obj": "A simple box — minimal capacity, legacy use-cases."
+    }
+
     for filename in sorted(os.listdir(folder)):
         if not filename.endswith(".obj"):
             continue
@@ -74,14 +86,19 @@ def get_models_list(folder):
         filepath     = os.path.join(folder, filename)
         vertex_count = get_vertex_count(filepath)
         capacity     = get_capacity(filepath)
+        
+        # Create a URL-safe name for frontend IDs/datasets
+        slug = filename.replace(".obj", "").replace(" ", "_").lower()
 
         models.append({
             "filename":      filename,
+            "slug":          slug,
             "name":          filename.replace(".obj", "").replace("_", " ").title(),
             "vertex_count":  vertex_count,
             "capacity_bits": capacity * 8, 
             "capacity_chars": capacity,
-            "obj_url":       f"/static/models/{filename}",
-            "thumbnail_url": f"/static/models/thumbnails/{filename.replace('.obj', '.png')}",
+            "description":    DESCRIPTIONS.get(filename, "A 3D mesh ready for secure data encoding."),
+            "obj_url":       f"/static/models/{urllib.parse.quote(filename)}",
+            "thumbnail_url": f"/static/models/thumbnails/{urllib.parse.quote(filename.replace('.obj', '.png'))}",
         })
     return models

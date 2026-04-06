@@ -1,26 +1,28 @@
-{% extends "base.html" %}
-
-{% block title %}Encode{% endblock %}
-{% block meta_desc %}Encode a secret message into a 3D model file using LSB vertex color steganography and AES-256 encryption.{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Encode{% endblock %} {% block
+meta_desc %}Encode a secret message into a 3D model file using LSB vertex color
+steganography and AES-256 encryption.{% endblock %} {% block content %}
 <div class="container">
   <div class="page-header">
     <div class="section__label">Steganography Encoder</div>
-    <h1 class="page-header__title" id="encode-heading">Hide a Secret Message</h1>
+    <h1 class="page-header__title" id="encode-heading">
+      Hide a Secret Message
+    </h1>
     <p class="page-header__subtitle">
       Your message is encoded invisibly into vertex color bits of a 3D model.
     </p>
   </div>
 
   <!-- Alert box (hidden initially) -->
-  <div id="alert-box" class="alert alert-error hidden" role="alert" aria-live="polite"></div>
+  <div
+    id="alert-box"
+    class="alert alert-error hidden"
+    role="alert"
+    aria-live="polite"
+  ></div>
 
   <div class="encode-layout">
-
     <!-- ════════════════ LEFT COLUMN ════════════════ -->
     <div class="encode-left">
-
       <!-- Section A: Message Input -->
       <div class="card" id="section-message">
         <div class="card__title">Section A — Secret Message</div>
@@ -36,7 +38,7 @@
           ></textarea>
           <div class="live-stats" id="msg-stats" aria-live="polite">
             <span id="char-count">0 characters</span>
-            <span style="opacity:0.4;">·</span>
+            <span style="opacity: 0.4">·</span>
             <span id="bits-needed">0 bits needed</span>
           </div>
         </div>
@@ -60,7 +62,11 @@
           <div class="strength-bar-wrap" aria-hidden="true">
             <div class="strength-bar" id="strength-bar"></div>
           </div>
-          <div class="strength-label" id="strength-label" aria-live="polite"></div>
+          <div
+            class="strength-label"
+            id="strength-label"
+            aria-live="polite"
+          ></div>
         </div>
 
         <div class="form-group">
@@ -71,17 +77,32 @@
               <strong>Enable AES-256 Encryption</strong> before hiding
             </span>
           </label>
-          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem; padding-left:3.5rem;">
-            Encrypts the message before embedding — even if discovered, it can't be read without the key.
+          <p
+            style="
+              font-size: 0.8rem;
+              color: var(--text-muted);
+              margin-top: 0.5rem;
+              padding-left: 3.5rem;
+            "
+          >
+            Encrypts the message before embedding — even if discovered, it can't
+            be read without the key.
           </p>
         </div>
 
         <!-- Decoy message (shown only when AES is ON) -->
-        <div class="decoy-field" id="decoy-field" role="region" aria-live="polite">
-          <div class="form-group" style="margin-bottom:0;">
+        <div
+          class="decoy-field"
+          id="decoy-field"
+          role="region"
+          aria-live="polite"
+        >
+          <div class="form-group" style="margin-bottom: 0">
             <label for="decoy-message">
               🎭 Decoy Message
-              <span style="font-weight:400; color:var(--text-muted);">(shown with wrong password)</span>
+              <span style="font-weight: 400; color: var(--text-muted)"
+                >(shown with wrong password)</span
+              >
             </label>
             <input
               type="text"
@@ -103,7 +124,10 @@
           role="button"
           tabindex="0"
           aria-label="Drop or browse .OBJ file"
-          onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('obj-upload').click()"
+          onkeydown="
+            if (event.key === 'Enter' || event.key === ' ')
+              document.getElementById('obj-upload').click();
+          "
         >
           <input
             type="file"
@@ -117,41 +141,79 @@
             <strong>Drag &amp; drop</strong> your <code>.OBJ</code> file here
           </div>
           <div class="dropzone__hint">or click to browse — .OBJ files only</div>
-          <div class="dropzone__filename" id="drop-filename" aria-live="polite"></div>
+          <div
+            class="dropzone__filename"
+            id="drop-filename"
+            aria-live="polite"
+          ></div>
         </div>
       </div>
-
-    </div><!-- /encode-left -->
+    </div>
+    <!-- /encode-left -->
 
     <!-- ════════════════ RIGHT COLUMN ════════════════ -->
     <div class="encode-right">
-
       <!-- Section C: Model Selector -->
       <div class="card" id="section-models">
         <div class="card__title">Section C — Choose a 3D Model</div>
 
-        <div class="model-grid" id="model-grid" role="listbox" aria-label="Select a 3D model">
-
+        <div
+          class="model-grid"
+          id="model-grid"
+          role="listbox"
+          aria-label="Select a 3D model"
+        >
           <!-- Dynamically populated by JS from /api/models -->
-          <div class="viewer-empty" style="grid-column: 1 / -1; padding: 2rem 0;">
+          <div
+            class="viewer-empty"
+            style="grid-column: 1 / -1; padding: 2rem 0"
+          >
             <span class="viewer-empty__icon">⏳</span>
             Fetching model library…
           </div>
+        </div>
+        <!-- /model-grid -->
 
-        </div><!-- /model-grid -->
-
-        <a href="/models" class="browse-link" id="browse-models-link">Browse All Models →</a>
+        <a href="/models" class="browse-link" id="browse-models-link"
+          >Browse All Models →</a
+        >
       </div>
 
       <!-- Section E: 3D Viewer -->
-      <div class="card" style="padding:0;" id="section-viewer">
+      <div class="card" style="padding: 0" id="section-viewer">
         <div class="viewer-toolbar">
           <span class="viewer-toolbar__label">Render Mode</span>
-          <button class="btn-mode active" data-mode="solid"     id="mode-solid"     aria-pressed="true">Solid</button>
-          <button class="btn-mode"        data-mode="wireframe" id="mode-wireframe"  aria-pressed="false">Wireframe</button>
-          <button class="btn-mode"        data-mode="vertex"    id="mode-vertex"     aria-pressed="false">Vertex</button>
+          <button
+            class="btn-mode active"
+            data-mode="solid"
+            id="mode-solid"
+            aria-pressed="true"
+          >
+            Solid
+          </button>
+          <button
+            class="btn-mode"
+            data-mode="wireframe"
+            id="mode-wireframe"
+            aria-pressed="false"
+          >
+            Wireframe
+          </button>
+          <button
+            class="btn-mode"
+            data-mode="vertex"
+            id="mode-vertex"
+            aria-pressed="false"
+          >
+            Vertex
+          </button>
         </div>
-        <div id="viewer-container" style="height:380px;" role="img" aria-label="3D model preview">
+        <div
+          id="viewer-container"
+          style="height: 380px"
+          role="img"
+          aria-label="3D model preview"
+        >
           <div class="viewer-empty">
             <span class="viewer-empty__icon" aria-hidden="true">🧊</span>
             Select a model or upload an OBJ file to preview it here
@@ -160,41 +222,212 @@
       </div>
 
       <!-- Section F: Encode Button -->
-      <div class="card" id="section-encode-btn" style="text-align:center;">
+      <div class="card" id="section-encode-btn" style="text-align: center">
         <div class="card__title">Section F — Encode &amp; Download</div>
-        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem;">
-          Hides your message inside the selected 3D model. The encoded file will be ready to download.
+        <p
+          style="
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+          "
+        >
+          Hides your message inside the selected 3D model. The encoded file will
+          be ready to download.
         </p>
         <button
           class="btn btn-primary btn-lg pulse"
           id="encode-btn"
           aria-describedby="encode-hint"
-          style="width:100%; justify-content:center;"
+          style="width: 100%; justify-content: center"
         >
           <span class="btn-text">🔐 Encode &amp; Download</span>
-          <span class="spinner hidden" id="encode-spinner" aria-hidden="true"></span>
+          <span
+            class="spinner hidden"
+            id="encode-spinner"
+            aria-hidden="true"
+          ></span>
         </button>
-        <p id="encode-hint" style="font-size:0.78rem; color:var(--text-muted); margin-top:0.75rem;">
-          Processing happens on the server. Your message never leaves the form until you click encode.
+        <p
+          id="encode-hint"
+          style="
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.75rem;
+          "
+        >
+          Processing happens on the server. Your message never leaves the form
+          until you click encode.
         </p>
       </div>
 
-    </div><!-- /encode-right -->
-  </div><!-- /encode-layout -->
+      <!-- Section G: Backend Processing HUD (Hidden by default) -->
+      <div class="card hidden shadow-lg" id="backend-hud" style="margin-top: 1.5rem; border-color: #39FF14; background: #000; border-width: 2px;">
+        <div class="card__title" style="color: #39FF14; font-family: monospace; font-size: 0.8rem; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="pulse-dot"></span> 
+            <span>BACKEND_STATUS: <span id="hud-status-text">PROCESSING...</span></span>
+          </div>
+          <span style="font-size: 10px; opacity: 0.6;">VAULT_V2.1</span>
+        </div>
+        
+        <div id="console-logs" class="console-box">
+          <!-- Logs injected by JS -->
+        </div>
+
+        <div class="progress-track">
+          <div id="hud-progress" class="progress-fill"></div>
+        </div>
+
+        <div id="hud-actions" class="hidden" style="margin-top: 1.5rem; text-align: right;">
+          <button id="hud-next-btn" class="btn btn-secondary" style="background: transparent; border: 1px solid #39FF14; color: #39FF14; font-size: 0.75rem; letter-spacing: 1px; padding: 10px 20px;">
+            🚀 LAUNCH COMPARISON →
+          </button>
+        </div>
+      </div>
+
+    </div>
+    <!-- /encode-right -->
+  </div>
+  <!-- /encode-layout -->
 </div>
-{% endblock %}
+{% endblock %} 
+
+{% block styles %}
+<style>
+  #section-models {
+    max-height: 520px;
+    display: flex;
+    flex-direction: column;
+  }
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+    gap: 12px !important;
+    overflow-y: auto;
+    padding: 8px;
+    margin-top: 10px;
+    flex: 1;
+    border: 1px solid var(--border);
+    background: rgba(0,0,0,0.02);
+  }
+  .model-card {
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--surface);
+    transition: all 0.2s ease;
+    position: relative;
+  }
+  .model-card:hover:not(.disabled) {
+    border-color: var(--accent) !important;
+    transform: translateY(-2px);
+  }
+  .model-card.selected {
+    border: 2px solid var(--accent) !important;
+    box-shadow: 0 4px 12px rgba(181, 69, 27, 0.15);
+    background: var(--white) !important;
+  }
+  .model-card__thumb {
+    height: 70px !important;
+  }
+  .model-card__name {
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+  }
+  .model-card__meta {
+    font-size: 10px !important;
+    opacity: 0.8;
+  }
+  .checkmark {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: var(--accent);
+    color: #fff;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 900;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 5;
+  }
+  .model-card.selected .checkmark {
+    opacity: 1;
+  }
+  .console-box {
+    background: #000;
+    color: #39FF14;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 11px;
+    padding: 12px;
+    height: 120px;
+    overflow-y: auto;
+    border-radius: 4px;
+    margin-top: 8px;
+    border: 1px solid rgba(57, 255, 20, 0.2);
+  }
+  .console__line {
+    margin-bottom: 4px;
+    opacity: 0.7;
+  }
+  .console__line.active {
+    opacity: 1;
+    color: #fff;
+  }
+  .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #39FF14;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.5); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.5; }
+  }
+  .progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(57, 255, 20, 0.1);
+    margin-top: 12px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    width: 0%;
+    height: 100%;
+    background: #39FF14;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px #39FF14;
+  }
+  .log-sys { color: #888; }
+  .log-sec { color: #00FFFF; }
+  .log-alg { color: #eab308; }
+  .log-success { color: #39FF14; font-weight: bold; }
+  
+  #hud-next-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 0 rgba(57, 255, 20, 0);
+  }
+  #hud-next-btn:hover {
+    background: #39FF14 !important;
+    color: #000 !important;
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+    transform: scale(1.02);
+  }
+</style>
+{% endblock %} 
 
 {% block scripts %}
-<script type="module" src="{{ url_for('static', filename='js/encode.js') }}"></script>
-<script type="module">
-  // Fix 1: Replace static thumbnails with real Three.js renders
-  import { renderThumbnail } from '/static/js/viewer.js';
-  document.querySelectorAll('.model-card').forEach(card => {
-    const name = card.dataset.name;
-    const img  = card.querySelector('.model-card__thumb');
-    if (name && img) {
-      renderThumbnail(img, '/static/models/' + name + '.obj');
-    }
-  });
-</script>
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/encode.js') }}"
+></script>
 {% endblock %}
