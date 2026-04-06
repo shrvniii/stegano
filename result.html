@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% block title %}Result — 3D Steg Vault{% endblock %}
+
+{% block content %}
+<div class="result-page">
+
+  <!-- ── Header ────────────────────────────────────────────────── -->
+  <header class="result-header">
+    <div class="badge">✅ Encoding Complete</div>
+    <h1>Your secret is hidden.</h1>
+    <p class="sub">Share <strong>QR1</strong> publicly and <strong>QR2</strong> only to your intended receiver.</p>
+  </header>
+
+  <!-- ── QR Code Pair ─────────────────────────────────────────── -->
+  <section class="qr-section" id="qr-section">
+    <div class="qr-card qr1">
+      <div class="qr-label-top">PUBLIC</div>
+      <div class="qr-img-wrap">
+        <img src="{{ qr1_url }}" alt="QR1 – Encoded File" id="qr1-img">
+      </div>
+      <div class="qr-info">
+        <span class="qr-num">QR 1</span>
+        <span class="qr-desc">Encoded OBJ File Link</span>
+      </div>
+      <p class="qr-hint">Share freely — anyone can view the model, no one can read the message without QR2.</p>
+      <a class="btn-download" href="{{ qr1_url }}" download="QR1_file.png">⬇ Download QR1</a>
+    </div>
+
+    <div class="qr-divider">
+      <div class="divider-line"></div>
+      <span class="divider-icon">🔐</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="qr-card qr2">
+      <div class="qr-label-top">PRIVATE</div>
+      <div class="qr-img-wrap">
+        <img src="{{ qr2_url }}" alt="QR2 – Password Key" id="qr2-img">
+      </div>
+      <div class="qr-info">
+        <span class="qr-num">QR 2</span>
+        <span class="qr-desc">Secret Password Key</span>
+      </div>
+      <p class="qr-hint">Share <em>only</em> with your intended receiver — via Signal, in person, or any private channel.</p>
+      <a class="btn-download" href="{{ qr2_url }}" download="QR2_key.png">⬇ Download QR2</a>
+    </div>
+  </section>
+
+  <!-- ── Encoding Stats ───────────────────────────────────────── -->
+  <section class="stats-section">
+    <h2>Encoding Stats</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value">{{ stats.bits_used | default('—') }}</div>
+        <div class="stat-label">Bits Used</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔵</div>
+        <div class="stat-value">{{ stats.vertices_modified | default('—') }}</div>
+        <div class="stat-label">Vertices Modified</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value">{{ stats.capacity_percent | default('—') }}%</div>
+        <div class="stat-label">Capacity Used</div>
+        <div class="stat-bar-wrap">
+          <div class="stat-bar" style="width: {{ stats.capacity_percent | default(0) }}%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔒</div>
+        <div class="stat-value">{{ 'AES-256' if stats.encrypted else 'None' }}</div>
+        <div class="stat-label">Encryption</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Before / After 3D Comparison ────────────────────────── -->
+  <section class="comparison-section">
+    <h2>Before / After 3D Comparison</h2>
+    <p class="compare-hint">Both models look identical — that's the point.</p>
+    <div class="viewers-wrap">
+      <div class="viewer-block">
+        <div class="viewer-label">Original</div>
+        <div id="viewer-original" class="viewer-canvas"></div>
+      </div>
+      <div class="viewer-block">
+        <div class="viewer-label">Encoded</div>
+        <div id="viewer-encoded" class="viewer-canvas"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Actions ──────────────────────────────────────────────── -->
+  <div class="result-actions">
+    <a href="/decode" class="btn-primary">Go to Decoder</a>
+    <a href="/encode" class="btn-secondary">Encode Another</a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── Pass model URLs from Flask ───────────────────────────────
+  const ORIGINAL_OBJ = "{{ original_obj_url | default('') }}";
+  const ENCODED_OBJ  = "{{ encoded_obj_url  | default('') }}";
+</script>
+<script src="/static/js/viewer.js"></script>
+<script>
+  // Init two side-by-side viewers after viewer.js is loaded
+  document.addEventListener("DOMContentLoaded", () => {
+    if (ORIGINAL_OBJ) initViewer("viewer-original", ORIGINAL_OBJ);
+    if (ENCODED_OBJ)  initViewer("viewer-encoded",  ENCODED_OBJ);
+  });
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+/* ── Result Page ──────────────────────────────────────────────── */
+.result-page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 6rem;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.result-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.result-header .badge {
+  display: inline-block;
+  background: #d1fae5;
+  color: #065f46;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  padding: .35rem .9rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+.result-header h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  color: var(--text-primary);
+  margin: 0 0 .6rem;
+}
+.result-header .sub { color: var(--text-muted); }
+
+/* ── QR Section ───────────────────────────────────────────────── */
+.qr-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 3.5rem;
+}
+
+.qr-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.6rem;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .8rem;
+  transition: transform .2s, box-shadow .2s;
+}
+.qr-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.12); }
+
+.qr-label-top {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  padding: .25rem .7rem;
+  border-radius: 999px;
+}
+.qr1 .qr-label-top { background: #dbeafe; color: #1d4ed8; }
+.qr2 .qr-label-top { background: #fce7f3; color: #9d174d; }
+
+.qr-img-wrap img {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  border-radius: .5rem;
+  border: 1px solid var(--border);
+}
+
+.qr-info { display: flex; flex-direction: column; align-items: center; gap: .15rem; }
+.qr-num  { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+.qr-desc { font-size: .8rem; color: var(--text-muted); }
+
+.qr-hint { font-size: .78rem; color: var(--text-muted); text-align: center; line-height: 1.5; }
+
+.btn-download {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  padding: .5rem 1.2rem;
+  border-radius: .5rem;
+  font-size: .82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity .2s;
+}
+.btn-download:hover { opacity: .85; }
+
+/* Divider */
+.qr-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .6rem;
+  padding-top: 4rem;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+}
+.divider-line { width: 2px; height: 40px; background: var(--border); }
+
+/* ── Stats ────────────────────────────────────────────────────── */
+.stats-section { margin-bottom: 3.5rem; }
+.stats-section h2 { font-size: 1.3rem; margin-bottom: 1.2rem; color: var(--text-primary); }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: .9rem;
+  padding: 1.2rem 1rem;
+  text-align: center;
+}
+.stat-icon  { font-size: 1.5rem; margin-bottom: .4rem; }
+.stat-value { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: .78rem; color: var(--text-muted); margin-top: .2rem; }
+
+.stat-bar-wrap {
+  margin-top: .6rem;
+  height: 6px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.stat-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width .6s ease;
+}
+
+/* ── Comparison ───────────────────────────────────────────────── */
+.comparison-section { margin-bottom: 3rem; }
+.comparison-section h2 { font-size: 1.3rem; margin-bottom: .4rem; color: var(--text-primary); }
+.compare-hint { font-size: .85rem; color: var(--text-muted); margin-bottom: 1.2rem; }
+
+.viewers-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+@media (max-width: 640px) { .viewers-wrap { grid-template-columns: 1fr; } }
+
+.viewer-block { display: flex; flex-direction: column; gap: .5rem; }
+.viewer-label {
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.viewer-canvas {
+  height: 300px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: .9rem;
+  overflow: hidden;
+}
+
+/* ── Actions ──────────────────────────────────────────────────── */
+.result-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-primary, .btn-secondary {
+  padding: .7rem 2rem;
+  border-radius: .6rem;
+  font-weight: 700;
+  font-size: .95rem;
+  text-decoration: none;
+  transition: opacity .2s, transform .15s;
+}
+.btn-primary:hover, .btn-secondary:hover { opacity: .85; transform: translateY(-2px); }
+.btn-primary   { background: var(--accent); color: #fff; }
+.btn-secondary { background: var(--surface); color: var(--text-primary); border: 1.5px solid var(--border); }
+</style>
+{% endblock %}

@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% block title %}Decode — 3D Steg Vault{% endblock %}
+
+{% block content %}
+<div class="decode-page">
+
+  <!-- ── Header ────────────────────────────────────────────────── -->
+  <header class="decode-header">
+    <h1>🔍 Decode a Message</h1>
+    <p class="sub">Upload the encoded OBJ file and enter (or scan) the password key to reveal the hidden message.</p>
+  </header>
+
+  <!-- ── Decoder Form ─────────────────────────────────────────── -->
+  <section class="decode-form-section">
+
+    <!-- File Upload -->
+    <div class="form-group">
+      <label class="form-label">Encoded OBJ File</label>
+      <div class="drop-zone" id="dropzone-decode">
+        <div class="drop-inner" id="drop-inner-decode">
+          <span class="drop-icon">📁</span>
+          <p>Drag & drop your encoded <code>.obj</code> file here</p>
+          <span class="drop-or">or</span>
+          <label class="btn-browse" for="obj-file-input">Browse File</label>
+          <input type="file" id="obj-file-input" accept=".obj" hidden>
+        </div>
+        <div class="drop-ready hidden" id="drop-ready-decode">
+          <span class="ready-icon">✅</span>
+          <span id="drop-filename-decode">file.obj</span>
+          <button class="clear-file" id="clear-decode-file">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Password Input -->
+    <div class="form-group">
+      <label class="form-label" for="decode-password">Password Key</label>
+      <div class="password-wrap">
+        <input
+          type="password"
+          id="decode-password"
+          class="form-input"
+          placeholder="Enter key manually or scan QR2..."
+          autocomplete="off"
+        >
+        <button class="toggle-pw" id="toggle-pw" title="Show/hide password">👁</button>
+      </div>
+      <p class="field-hint">Use the QR2 scanner below to auto-fill this field.</p>
+    </div>
+
+    <!-- QR Scanner hint -->
+    <div class="qr-scan-bar">
+      <span>📷 Scan QR2 to auto-fill the key →</span>
+      <button class="btn-scan" id="btn-scan-qr">Open Scanner</button>
+    </div>
+
+    <!-- Decode Button -->
+    <button class="btn-decode" id="btn-decode">
+      <span id="decode-btn-text">🔓 Decode Message</span>
+      <span id="decode-spinner" class="spinner hidden"></span>
+    </button>
+
+  </section>
+
+  <!-- ── Result Panel ──────────────────────────────────────────── -->
+  <section class="result-panel hidden" id="result-panel">
+
+    <!-- Integrity Badge -->
+    <div class="integrity-badge" id="integrity-badge">
+      <span id="integrity-icon"></span>
+      <span id="integrity-label"></span>
+      <span id="integrity-detail" class="integrity-detail"></span>
+    </div>
+
+    <!-- Decoded Message -->
+    <div class="decoded-message-wrap">
+      <div class="decoded-label">Hidden Message</div>
+      <div class="decoded-message" id="decoded-message"></div>
+      <button class="btn-copy" id="btn-copy-msg" title="Copy message">📋 Copy</button>
+    </div>
+
+  </section>
+
+  <!-- ── Decode History ────────────────────────────────────────── -->
+  <section class="history-section" id="history-section">
+    <div class="history-header">
+      <h2>📜 Session History</h2>
+      <button class="btn-clear-history" id="btn-clear-history">Clear</button>
+    </div>
+    <p class="history-note">Stored in your browser session only — cleared on page refresh.</p>
+    <ul class="history-list" id="history-list">
+      <li class="history-empty" id="history-empty">No decodes yet this session.</li>
+    </ul>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/decode.js"></script>
+{% endblock %}
+
+{% block styles %}
+<style>
+/* ── Decode Page ──────────────────────────────────────────────── */
+.decode-page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 6rem;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.decode-header { text-align: center; margin-bottom: 2.5rem; }
+.decode-header h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); color: var(--text-primary); margin: 0 0 .5rem; }
+.decode-header .sub { color: var(--text-muted); font-size: .92rem; }
+
+/* ── Form ─────────────────────────────────────────────────────── */
+.decode-form-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  margin-bottom: 2rem;
+}
+
+.form-group { display: flex; flex-direction: column; gap: .5rem; }
+.form-label { font-size: .82rem; font-weight: 700; color: var(--text-primary); letter-spacing: .05em; text-transform: uppercase; }
+
+/* Drop Zone */
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: .8rem;
+  padding: 2rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  position: relative;
+}
+.drop-zone.dragover { border-color: var(--accent); background: var(--accent-faint); }
+.drop-inner { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+.drop-icon { font-size: 2rem; }
+.drop-inner p { margin: 0; color: var(--text-muted); font-size: .88rem; }
+.drop-or { color: var(--text-muted); font-size: .78rem; }
+
+.btn-browse {
+  background: var(--accent);
+  color: #fff;
+  padding: .4rem 1.1rem;
+  border-radius: .45rem;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.drop-ready {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  justify-content: center;
+  font-size: .9rem;
+  color: var(--text-primary);
+}
+.ready-icon { font-size: 1.2rem; }
+.clear-file {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 1rem;
+}
+.clear-file:hover { color: #ef4444; }
+.hidden { display: none !important; }
+
+/* Password */
+.password-wrap { display: flex; gap: .5rem; }
+.form-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: .55rem;
+  padding: .6rem .9rem;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: .92rem;
+}
+.form-input:focus { outline: none; border-color: var(--accent); }
+.toggle-pw {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: .55rem;
+  padding: 0 .8rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: border-color .2s;
+}
+.toggle-pw:hover { border-color: var(--accent); }
+
+.field-hint { font-size: .75rem; color: var(--text-muted); margin: 0; }
+
+/* QR Scan bar */
+.qr-scan-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: .6rem;
+  padding: .7rem 1rem;
+  font-size: .83rem;
+  color: var(--text-muted);
+}
+.btn-scan {
+  margin-left: auto;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: .45rem;
+  padding: .3rem .9rem;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: border-color .2s;
+}
+.btn-scan:hover { border-color: var(--accent); }
+
+/* Decode Button */
+.btn-decode {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: .65rem;
+  padding: .85rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  transition: opacity .2s, transform .15s;
+  font-family: inherit;
+}
+.btn-decode:hover { opacity: .88; transform: translateY(-1px); }
+.btn-decode:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Result Panel ─────────────────────────────────────────────── */
+.result-panel {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+  animation: slideIn .35s ease;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* Integrity */
+.integrity-badge {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  padding: .7rem 1rem;
+  border-radius: .6rem;
+  font-size: .88rem;
+  font-weight: 600;
+}
+.integrity-badge.pass { background: #d1fae5; color: #065f46; }
+.integrity-badge.fail { background: #fee2e2; color: #991b1b; }
+.integrity-detail { font-weight: 400; font-size: .78rem; margin-left: auto; }
+
+/* Decoded message */
+.decoded-message-wrap { position: relative; }
+.decoded-label {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text-muted);
+  margin-bottom: .5rem;
+}
+.decoded-message {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: .7rem;
+  padding: 1rem 1.1rem;
+  font-size: .95rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 80px;
+}
+.btn-copy {
+  position: absolute;
+  top: 2rem;
+  right: .7rem;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: .4rem;
+  padding: .25rem .6rem;
+  font-size: .75rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: border-color .2s, color .2s;
+}
+.btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── History ──────────────────────────────────────────────────── */
+.history-section {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .3rem;
+}
+.history-header h2 { font-size: 1.05rem; margin: 0; color: var(--text-primary); }
+.btn-clear-history {
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: .4rem;
+  padding: .25rem .7rem;
+  font-size: .75rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: border-color .2s, color .2s;
+}
+.btn-clear-history:hover { border-color: #ef4444; color: #ef4444; }
+
+.history-note { font-size: .75rem; color: var(--text-muted); margin: 0 0 1rem; }
+
+.history-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .6rem; }
+.history-empty { font-size: .85rem; color: var(--text-muted); text-align: center; padding: 1rem 0; }
+
+.history-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: .6rem 1rem;
+  align-items: start;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: .6rem;
+  padding: .75rem 1rem;
+  font-size: .82rem;
+  animation: slideIn .25s ease;
+}
+.hist-time { color: var(--text-muted); white-space: nowrap; }
+.hist-msg { color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist-badge {
+  font-size: .7rem;
+  padding: .15rem .5rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.hist-badge.ok   { background: #d1fae5; color: #065f46; }
+.hist-badge.fail { background: #fee2e2; color: #991b1b; }
+</style>
+{% endblock %}
