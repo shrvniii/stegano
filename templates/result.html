@@ -16,7 +16,7 @@
   <!-- ── Download Encoded File (prominent, near top) ─────────── -->
   <section style="text-align:center; padding:1.5rem 0 2rem;" aria-label="Download encoded file">
     <a
-      href="{{ download_url or '#' }}"
+      href="{{ result.file_url or '#' }}"
       download
       class="btn btn-primary btn-lg"
       id="download-encoded"
@@ -24,10 +24,15 @@
     >
       ⬇  Download Encoded OBJ File
     </a>
-    {% if not download_url %}
+    {% if not result %}
     <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.75rem;">
       (Download available after encoding via the Encode page)
     </p>
+    {% endif %}
+    {% if result %}
+    <div style="margin-top:1rem; font-size:0.85rem; color:var(--text-muted);">
+      File: {{ result.output_file }} | Encrypted: {{ 'Yes 🔒' if result.stats and result.stats.encrypted else 'No 🔓' }}
+    </div>
     {% endif %}
   </section>
 
@@ -42,17 +47,17 @@
     <div class="qr-grid">
       <!-- QR1 — Public -->
       <div class="qr-card" id="qr1-card">
-        <div class="qr-card__label">📂 Public: Share this freely</div>
+        <div class="qr-card__label">📂 QR1: Share publicly</div>
         <div class="qr-card__hint">Links to the encoded .OBJ file download</div>
-        {% if qr1_path %}
-          <img src="{{ qr1_path }}" alt="QR Code 1 — public file link" id="qr1-img" />
+        {% if result.qr_file %}
+          <img src="{{ result.qr_file }}" alt="QR Code 1 — public file link" id="qr1-img" />
         {% else %}
           <div style="width:200px;height:200px;margin:0 auto 1rem;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.85rem;">
             QR1 will appear here
           </div>
         {% endif %}
         <a
-          href="{{ qr1_path or '#' }}"
+          href="{{ result.qr_file or '#' }}"
           download="steg_vault_qr1_public.png"
           class="btn btn-outline"
           style="font-size:0.85rem;"
@@ -64,17 +69,17 @@
 
       <!-- QR2 — Private -->
       <div class="qr-card" id="qr2-card">
-        <div class="qr-card__label">🔑 Private: Share only with receiver</div>
+        <div class="qr-card__label">🔑 QR2: Share privately</div>
         <div class="qr-card__hint">Encodes the password key</div>
-        {% if qr2_path %}
-          <img src="{{ qr2_path }}" alt="QR Code 2 — private key" id="qr2-img" />
+        {% if result.qr_key %}
+          <img src="{{ result.qr_key }}" alt="QR Code 2 — private key" id="qr2-img" />
         {% else %}
           <div style="width:200px;height:200px;margin:0 auto 1rem;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.85rem;">
             QR2 will appear here
           </div>
         {% endif %}
         <a
-          href="{{ qr2_path or '#' }}"
+          href="{{ result.qr_key or '#' }}"
           download="steg_vault_qr2_private.png"
           class="btn btn-outline"
           style="font-size:0.85rem;"
@@ -93,20 +98,20 @@
 
     <div class="stats-grid" id="stats-grid">
       <div class="stat-item">
-        <div class="stat-item__value">{{ stats.bits_used if stats else '—' }}</div>
+        <div class="stat-item__value">{{ result.stats.bits_used if result.stats else '—' }}</div>
         <div class="stat-item__label">Bits Used</div>
       </div>
       <div class="stat-item">
-        <div class="stat-item__value">{{ stats.vertices_modified if stats else '—' }}</div>
-        <div class="stat-item__label">Vertices Modified</div>
+        <div class="stat-item__value">{{ result.stats.capacity if result.stats else '—' }}</div>
+        <div class="stat-item__label">Capacity (Bits)</div>
       </div>
       <div class="stat-item">
-        <div class="stat-item__value">{{ stats.capacity_percent if stats else '—' }}%</div>
-        <div class="stat-item__label">Capacity Used</div>
+        <div class="stat-item__value">{{ result.stats.percentage if result.stats else '—' }}%</div>
+        <div class="stat-item__label">Usage %</div>
       </div>
       <div class="stat-item">
         <div class="stat-item__value" style="font-size:1rem;">
-          {% if stats and stats.encrypted %}
+          {% if result.stats and result.stats.encryption %}
             🔒 AES-256
           {% else %}
             🔓 None
@@ -124,34 +129,39 @@
 
     <!-- Explanatory note -->
     <div class="compare-explainer" style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.2); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom:1.5rem; font-size:0.9rem; line-height:1.7; color: var(--text-secondary);">
-      <strong style="color:var(--accent-cyan);">How to read this comparison:</strong>
-      The left viewer shows the model with standard lighting (how everyone sees it).
-      The right viewer shows the <em>raw vertex RGB colours</em> where your message bits are actually stored.
-      To the naked eye they look identical — <strong>that's steganography</strong>.
+      <strong style="color:var(--accent-cyan);">Compare:</strong>
+      The left viewer shows the original file; the right shows the encoded file with hidden secret data.
+      Use the controls below to switch between display modes.
+    </div>
+
+    <!-- Modal Render Mode Toggles -->
+    <div class="viewer-toolbar" style="margin-bottom:1rem; justify-content:center;">
+       <span class="viewer-toolbar__label">Render Mode</span>
+       <button class="btn-mode active" data-mode="solid"     id="mode-solid">Solid</button>
+       <button class="btn-mode"        data-mode="wireframe" id="mode-wireframe">Wireframe</button>
+       <button class="btn-mode"        data-mode="vertex"    id="mode-vertex">Points</button>
     </div>
 
     <div class="dual-viewer" id="dual-viewer-wrap">
       <div>
         <div class="viewer-panel">
           <div class="viewer-toolbar" style="border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
-            <span class="viewer-toolbar__label">Standard Lighting</span>
+            <span class="viewer-toolbar__label">Original Model</span>
           </div>
           <div id="viewer-original" class="viewer-container" style="height:360px;">
-            <div class="viewer-empty"><span class="viewer-empty__icon">🧊</span>Original model</div>
+            <div class="viewer-empty"><span class="viewer-empty__icon">🧊</span>Original</div>
           </div>
         </div>
-        <div class="dual-viewer__label">Original (no hidden data)</div>
       </div>
       <div>
         <div class="viewer-panel">
           <div class="viewer-toolbar" style="border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
-            <span class="viewer-toolbar__label" style="color:var(--accent-cyan);">Vertex Color Visualizer</span>
+            <span class="viewer-toolbar__label" style="color:var(--accent-cyan);">Encoded Model</span>
           </div>
           <div id="viewer-encoded" class="viewer-container" style="height:360px;">
-            <div class="viewer-empty"><span class="viewer-empty__icon">🔐</span>Encoded model</div>
+            <div class="viewer-empty"><span class="viewer-empty__icon">🔐</span>Encoded</div>
           </div>
         </div>
-        <div class="dual-viewer__label">Encoded — Vertex colours showing hidden bits</div>
       </div>
     </div>
   </section>
@@ -164,8 +174,8 @@
 
   let dualViewer = null;
 
-  const originalUrl = '{{ original_obj_url | default("/static/models/teapot.obj", true) }}';
-  const encodedUrl  = '{{ encoded_obj_url  | default("/static/models/teapot.obj", true) }}';
+  const originalUrl = '{{ result.original_obj_url | default("/static/models/teapot.obj", true) }}';
+  const encodedUrl  = '{{ result.encoded_obj_url  | default("/static/models/teapot.obj", true) }}';
 
   async function initComparison() {
     try {
@@ -177,17 +187,34 @@
       syncBackground(dualViewer.v1);
       syncBackground(dualViewer.v2);
 
-      // Fix 6: Left viewer = standard solid (MeshStandardMaterial)
+      // Default modes
       setRenderMode(dualViewer.v1, 'solid');
-
-      // Fix 6: Right viewer = vertex color visualizer (MeshBasicMaterial + vertexColors)
-      setVertexColorMode(dualViewer.v2);
+      setVertexColorMode(dualViewer.v2); // Special visualizer for encoded
     } catch (err) {
       console.error('Dual viewer init failed:', err);
     }
   }
 
   initComparison();
+
+  // Mode Buttons
+  const modeBtns = document.querySelectorAll('.btn-mode');
+  modeBtns.forEach(btn => {
+     btn.addEventListener('click', () => {
+        if (!dualViewer) return;
+        modeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const m = btn.dataset.mode;
+        setRenderMode(dualViewer.v1, m);
+        
+        // If solid, the encoded one uses the vertex visualizer
+        if (m === 'solid') {
+           setVertexColorMode(dualViewer.v2);
+        } else {
+           setRenderMode(dualViewer.v2, m);
+        }
+     });
+  });
 
   // Sync theme
   const themeBtn = document.getElementById('theme-toggle');
