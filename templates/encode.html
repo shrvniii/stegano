@@ -132,70 +132,11 @@
 
         <div class="model-grid" id="model-grid" role="listbox" aria-label="Select a 3D model">
 
-          {% if models %}
-            {% for model in models %}
-            <div
-              class="model-card"
-              role="option"
-              tabindex="0"
-              data-name="{{ model.name }}"
-              data-capacity-bits="{{ model.capacity_bits }}"
-              id="model-card-{{ model.name }}"
-              aria-selected="false"
-              onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"
-              title="{{ model.name }} — {{ model.vertex_count }} vertices, capacity {{ (model.capacity_bits // 8) }} chars"
-            >
-              <img
-                src="{{ url_for('static', filename='models/thumbnails/' ~ model.name ~ '.png') }}"
-                alt="{{ model.name }} 3D model"
-                class="model-card__thumb"
-                loading="lazy"
-              />
-              <div class="model-card__body">
-                <div class="model-card__name">{{ model.name | capitalize }}</div>
-                <div class="model-card__meta">{{ model.vertex_count }} vertices</div>
-                <div class="model-card__meta">Max {{ (model.capacity_bits // 8) }} chars</div>
-                <div class="cap-bar-wrap" aria-hidden="true">
-                  <div class="cap-bar" style="width:0%"></div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-
-          {% else %}
-            <!-- Fallback: hardcoded defaults if Flask doesn't pass models -->
-            {% for item in [
-              ('teapot',       222,  533),
-              ('cube',           8,   19),
-              ('icosahedron',   12,   28)
-            ] %}
-            <div
-              class="model-card"
-              role="option"
-              tabindex="0"
-              data-name="{{ item[0] }}"
-              data-capacity-bits="{{ item[2] * 8 }}"
-              id="model-card-{{ item[0] }}"
-              aria-selected="false"
-              onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"
-            >
-              <img
-                src="{{ url_for('static', filename='models/thumbnails/' ~ item[0] ~ '.png') }}"
-                alt="{{ item[0] | capitalize }} 3D model"
-                class="model-card__thumb"
-                loading="lazy"
-              />
-              <div class="model-card__body">
-                <div class="model-card__name">{{ item[0] | capitalize }}</div>
-                <div class="model-card__meta">{{ item[1] }} vertices</div>
-                <div class="model-card__meta">Max {{ item[2] }} chars</div>
-                <div class="cap-bar-wrap" aria-hidden="true">
-                  <div class="cap-bar" style="width:0%"></div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-          {% endif %}
+          <!-- Dynamically populated by JS from /api/models -->
+          <div class="viewer-empty" style="grid-column: 1 / -1; padding: 2rem 0;">
+            <span class="viewer-empty__icon">⏳</span>
+            Fetching model library…
+          </div>
 
         </div><!-- /model-grid -->
 

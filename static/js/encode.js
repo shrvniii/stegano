@@ -44,28 +44,101 @@ document.addEventListener('DOMContentLoaded', () => {
   setupPasswordStrength();
   setupAesToggle();
   setupDropzone();
-  setupModelCards();
+  fetchAndRenderModels(); // Task 2: Dynamically fetch and render model cards
   setupRenderButtons();
   setupEncodeForm();
-
-  // Pre-select model from query param (optional)
-  const params = new URLSearchParams(location.search);
-  const pre = params.get('model');
-  if (pre) {
-    const card = document.querySelector(`.model-card[data-name="${pre}"]`);
-    if (card) card.click();
-  }
 });
+
+/* ── Model API & Dynamic Rendering ──────────────────────────────── */
+async function fetchAndRenderModels() {
+  const grid = document.getElementById('model-grid');
+  if (!grid) return;
+
+  try {
+    const res = await fetch('/api/models');
+    const models = await res.json();
+
+    if (!models || models.length === 0) {
+      grid.innerHTML = '<div class="viewer-empty" style="grid-column: 1/-1;">No models found.</div>';
+      return;
+    }
+
+    grid.innerHTML = ''; // Clear loader
+
+    models.forEach(model => {
+      const card = document.createElement('div');
+      card.className = 'model-card';
+      card.setAttribute('role', 'option');
+      card.setAttribute('tabindex', '0');
+      card.dataset.name = model.name.toLowerCase().replace(/\s+/g, '_');
+      card.dataset.capacityBits = model.capacity_bits;
+      card.id = `model-card-${card.dataset.name}`;
+      
+      const charCap = Math.floor(model.capacity_bits / 8);
+
+      card.innerHTML = `
+        <img src="${model.thumbnail_url}" alt="${model.name}" class="model-card__thumb" loading="lazy">
+        <div class="model-card__body">
+          <div class="model-card__name">${model.name}</div>
+          <div class="model-card__meta">${model.vertex_count} vertices</div>
+          <div class="model-card__meta">Max ${charCap} chars</div>
+          <div class="cap-bar-wrap" aria-hidden="true">
+            <div class="cap-bar" style="width:0%"></div>
+          </div>
+        </div>
+      `;
+
+      card.addEventListener('click', () => selectModelCard(card, model));
+      card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') card.click(); });
+
+      grid.appendChild(card);
+    });
+
+    // Check for pre-selected model in URL
+    const params = new URLSearchParams(location.search);
+    const pre = params.get('model');
+    if (pre) {
+      const card = document.querySelector(`.model-card[data-name="${pre}"]`);
+      if (card) card.click();
+    }
+
+    // Refresh capacity bars if message already exists
+    updateAllCapacityBars();
+
+  } catch (err) {
+    grid.innerHTML = '<div class="viewer-empty" style="grid-column: 1/-1;">⚠️ Failed to load model library.</div>';
+    console.error('Fetch models error:', err);
+  }
+}
+
+function selectModelCard(card, model) {
+  if (card.classList.contains('disabled')) return;
+
+  // Highlight selection (Task 2 step 6)
+  document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+
+  // Store selection in state (Task 2 step 7)
+  selectedModel = {
+    name: card.dataset.name,
+    capacity_bits: parseInt(card.dataset.capacityBits, 10),
+  };
+  customFile = null;
+  if (dropFilename) dropFilename.textContent = '';
+
+  const objUrl = `/static/models/${selectedModel.name}.obj`;
+  loadModelInViewer(objUrl, selectedModel.name);
+}
 
 /* ── Message Counter & Capacity ─────────────────────────────────── */
 function setupMessageCounter() {
   if (!msgTextarea) return;
   msgTextarea.addEventListener('input', () => {
     const len  = msgTextarea.value.length;
-    const bits = len * 8;
+    const bits = len * 8; // Task 2 step 4
     if (charCount) charCount.textContent = `${len} characters`;
     if (bitsNeeded) bitsNeeded.textContent = `${bits} bits needed`;
-    updateAllCapacityBars();
+    updateAllCapacityBars(); // Task 2 step 5
   });
 }
 
@@ -81,7 +154,7 @@ function updateAllCapacityBars() {
       bar.className = 'cap-bar' + (pct > 80 ? ' high' : pct > 50 ? ' medium' : '');
     }
 
-    // Disable card if message is too big
+    // Disable card if message is too big (Task 2 step 5)
     if (bits > 0 && bits > cap) {
       card.classList.add('disabled');
       if (card.classList.contains('selected')) {
@@ -91,107 +164,6 @@ function updateAllCapacityBars() {
     } else {
       card.classList.remove('disabled');
     }
-  });
-}
-
-/* ── Password Strength ──────────────────────────────────────────── */
-function getStrength(pw) {
-  let score = 0;
-  if (pw.length >= 8)  score++;
-  if (pw.length >= 14) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  return score;
-}
-
-function setupPasswordStrength() {
-  if (!passInput) return;
-  passInput.addEventListener('input', () => {
-    const score = getStrength(passInput.value);
-    const pct   = Math.min(100, (score / 5) * 100);
-
-    if (strengthBar) {
-      strengthBar.style.width = pct + '%';
-      if (score <= 1)      strengthBar.style.background = 'var(--danger)';
-      else if (score <= 3) strengthBar.style.background = 'var(--warning)';
-      else                 strengthBar.style.background = 'var(--success)';
-    }
-
-    if (strengthLabel) {
-      const labels = ['', 'Weak', 'Weak', 'Medium', 'Strong', 'Very Strong'];
-      strengthLabel.textContent = passInput.value ? (labels[score] || 'Weak') : '';
-    }
-  });
-}
-
-/* ── AES + Decoy Toggle ─────────────────────────────────────────── */
-function setupAesToggle() {
-  if (!aesToggle || !decoyField) return;
-  aesToggle.addEventListener('change', () => {
-    decoyField.classList.toggle('visible', aesToggle.checked);
-  });
-}
-
-/* ── Drag & Drop ────────────────────────────────────────────────── */
-function setupDropzone() {
-  if (!dropzone) return;
-
-  dropzone.addEventListener('dragover', e => {
-    e.preventDefault();
-    dropzone.classList.add('dragover');
-  });
-
-  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-  
-  dropzone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropzone.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (file) handleCustomFile(file);
-  });
-
-  if (dropInput) {
-    dropInput.addEventListener('change', () => {
-      if (dropInput.files[0]) handleCustomFile(dropInput.files[0]);
-    });
-  }
-}
-
-function handleCustomFile(file) {
-  if (!file.name.toLowerCase().endsWith('.obj')) {
-    showAlert('Only .OBJ files are supported.', 'error');
-    return;
-  }
-  customFile = file;
-  selectedModel = null;
-
-  document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
-  if (dropFilename) dropFilename.textContent = file.name;
-
-  const url = URL.createObjectURL(file);
-  loadModelInViewer(url, file.name);
-}
-
-/* ── Model Cards ────────────────────────────────────────────────── */
-function setupModelCards() {
-  document.querySelectorAll('.model-card').forEach(card => {
-    card.addEventListener('click', () => {
-      if (card.classList.contains('disabled')) return;
-
-      document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-
-      selectedModel = {
-        name:          card.dataset.name,
-        capacity_bits: parseInt(card.dataset.capacityBits, 10),
-      };
-      customFile = null;
-      if (dropFilename) dropFilename.textContent = '';
-
-      const objUrl = `/static/models/${card.dataset.name}.obj`;
-      loadModelInViewer(objUrl, card.dataset.name);
-    });
   });
 }
 
