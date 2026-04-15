@@ -23,8 +23,8 @@ import { TeapotGeometry } from "three/addons/geometries/TeapotGeometry.js";
 
 const WARM_BROWN = 0x8b6f5e; // main model colour
 const WIRE_COLOR = 0x1a1a1a; // phantom gray wire
-const POINT_COLOR = 0x242424; // technical structural dots
-const DATA_COLOR = 0xBF00FF;  // Vibrant Electric Purple
+const POINT_COLOR = 0x111111; // technical structural dots (darkened for contrast)
+const DATA_COLOR = 0x9D00FF;  // Deep Electric Purple (premium requested accent)
 const BG_LIGHT = 0xede8dc;    // --surface
 const BG_DARK = 0x0A0A0A;     // Deep Charcoal
 
@@ -181,36 +181,38 @@ function applyModeWireframe(records, scene, highlightData = false) {
         const hGeom = new THREE.BufferGeometry();
         hGeom.setAttribute("position", new THREE.Float32BufferAttribute(dataPos, 3));
         
-        // --- Layer A: Subtle Additive Halo ---
+        // --- Layer A: Forensic Neon Halo ---
         const haloMat = new THREE.PointsMaterial({
           color: DATA_COLOR,
-          size: 3.5,              // Sharper glow
+          size: 7.0,              // Increased for forensic visibility
           sizeAttenuation: false, 
           transparent: true,
-          opacity: 0.5,
+          opacity: 0.8,
           blending: THREE.AdditiveBlending,
           depthWrite: false
         });
         const haloPc = new THREE.Points(hGeom, haloMat);
         haloPc.userData.isOverlay = true;
+        haloPc.renderOrder = 999;
         haloPc.position.copy(mesh.position);
         haloPc.quaternion.copy(mesh.quaternion);
-        haloPc.scale.copy(mesh.scale).multiplyScalar(1.001);
+        haloPc.scale.copy(mesh.scale).multiplyScalar(1.002);
         scene.add(haloPc);
 
-        // --- Layer B: Surgical Core ---
+        // --- Layer B: Focus Core ---
         const coreMat = new THREE.PointsMaterial({
           color: 0xffffff,
-          size: 1.2,            // 1.2px core
+          size: 2.5,            // 2.5px sharp core
           sizeAttenuation: false,
           transparent: false,
           depthTest: true
         });
         const corePc = new THREE.Points(hGeom, coreMat);
         corePc.userData.isOverlay = true;
+        corePc.renderOrder = 1000;
         corePc.position.copy(mesh.position);
         corePc.quaternion.copy(mesh.quaternion);
-        corePc.scale.copy(mesh.scale).multiplyScalar(1.0015);
+        corePc.scale.copy(mesh.scale).multiplyScalar(1.0025);
         scene.add(corePc);
       }
     }
@@ -271,18 +273,19 @@ function applyModeVertex(records, scene, highlightData = false) {
       dGeom.setAttribute("position", new THREE.Float32BufferAttribute(dataPos, 3));
       const dMat = new THREE.PointsMaterial({
         color: DATA_COLOR,
-        size: 3.5,
+        size: 7.0,
         sizeAttenuation: false,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.9,
         blending: THREE.AdditiveBlending,
         depthWrite: false
       });
       const dPc = new THREE.Points(dGeom, dMat);
       dPc.userData.isOverlay = true;
+      dPc.renderOrder = 999;
       dPc.position.copy(mesh.position);
       dPc.quaternion.copy(mesh.quaternion);
-      dPc.scale.copy(mesh.scale).multiplyScalar(1.001);
+      dPc.scale.copy(mesh.scale).multiplyScalar(1.002);
       scene.add(dPc);
     }
   });
@@ -512,7 +515,6 @@ export function setVertexColorMode(viewer) {
     }
 
     // Amplify colors for visualization:
-    // Anything not white (1,1,1) becomes high-contrast cyan
     const geom = mesh.geometry.clone();
     const colors = geom.attributes.color.array;
     for (let i = 0; i < colors.length; i += 3) {
@@ -521,30 +523,34 @@ export function setVertexColorMode(viewer) {
         b = colors[i + 2];
       // If LSB is changed, it won't be exactly 1.0
       if (r < 0.999 || g < 0.999 || b < 0.999) {
-        colors[i] = 0.0;
-        colors[i + 1] = 1.0;
-        colors[i + 2] = 1.0; // Cyan
+        // High-visibility Deep Electric Purple
+        colors[i] = 0.61;    // R: 157
+        colors[i + 1] = 0.0; // G: 0
+        colors[i + 2] = 1.0; // B: 255
       } else {
-        colors[i] = 0.2;
-        colors[i + 1] = 0.18;
-        colors[i + 2] = 0.16; // Dark mesh
+        // Ultra-dark background mesh for max contrast
+        colors[i] = 0.02;
+        colors[i + 1] = 0.02;
+        colors[i + 2] = 0.03;
       }
     }
     geom.attributes.color.needsUpdate = true;
 
     const pMat = new THREE.PointsMaterial({
       vertexColors: true,
-      size: 0.15,
-      sizeAttenuation: true,
+      size: 7.0,              // Increased forensic size
+      sizeAttenuation: false, // Forensic mode: consistent pixel size
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
     });
 
     const pc = new THREE.Points(geom, pMat);
     pc.userData.isOverlay = true;
+    pc.renderOrder = 999;
     pc.position.copy(mesh.position);
     pc.quaternion.copy(mesh.quaternion);
-    pc.scale.copy(mesh.scale);
+    pc.scale.copy(mesh.scale).multiplyScalar(1.002);
 
     mesh.visible = false;
     viewer.scene.add(pc);

@@ -31,8 +31,8 @@ def write_obj(filepath, vertices, lines, vertex_line_indices):
     """
     for idx, line_num in enumerate(vertex_line_indices):
         v = vertices[idx]
-        # Rebuild the vertex line with updated color values
-        lines[line_num] = f"v {v[0]} {v[1]} {v[2]} {v[3]} {v[4]} {v[5]}\n"
+        # Rebuild the vertex line with high-precision (8 decimal places) to preserve LSB data
+        lines[line_num] = f"v {v[0]:.8f} {v[1]:.8f} {v[2]:.8f} {v[3]:.8f} {v[4]:.8f} {v[5]:.8f}\n"
 
     with open(filepath, "w") as f:
         f.writelines(lines)
